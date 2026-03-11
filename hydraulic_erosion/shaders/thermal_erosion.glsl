@@ -1,7 +1,6 @@
 // thermal_erosion.glsl
 // Compute Shader for Thermal Erosion (Our Improvement)
 // Smooths sharp slopes by material slippage
-
 #version 430 core
 
 layout(local_size_x = 16, local_size_y = 16) in;

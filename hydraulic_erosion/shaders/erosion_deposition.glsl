@@ -2,7 +2,6 @@
 // Compute Shader for Erosion and Deposition Process
 // Based on Mei et al. [2007] Equations 10-12
 // 3.3 Erosion and Deposition
-
 #version 430 core
 
 layout(local_size_x = 16, local_size_y = 16) in;

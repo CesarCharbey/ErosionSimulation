@@ -22,7 +22,7 @@ void main() {
     TerrainHeight = texture(terrainTex, aTexCoord).r;
     SedimentAmount = texture(sedimentTex, aTexCoord).r;
 
-    // If water is deep, we render the WATER surface. 
+    // If water is deep, we render the water surface. 
     // If dry, we render the TERRAIN surface.
     float surfaceHeight = TerrainHeight + max(WaterDepth, 0.0);    
 

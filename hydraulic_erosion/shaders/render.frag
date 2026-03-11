@@ -11,7 +11,6 @@ out vec4 FragColor;
 uniform sampler2D terrainTex;
 uniform int gridSize;
 uniform float cellSize;
-
 uniform vec3 u_ViewPos;
 uniform float u_Time;
 uniform int u_ShowSediment; // 0 = Beautiful mode, 1 = Scientific mode

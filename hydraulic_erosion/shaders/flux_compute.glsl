@@ -2,7 +2,6 @@
 // Compute Shader for Outflow Flux Calculation (Pipe Model)
 // Based on Mei et al. [2007] Equations 2-5
 // 3.2.1 Outflow Flux Calculation (Pipe Model)
-
 #version 430 core
 
 layout(local_size_x = 16, local_size_y = 16) in;

@@ -2,7 +2,6 @@
 // Compute Shader for Evaporation
 // Based on Mei et al. [2007] Equation 15
 // 3.5 Evaporation
-
 #version 430 core
 
 layout(local_size_x = 16, local_size_y = 16) in;

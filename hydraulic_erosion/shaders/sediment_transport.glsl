@@ -2,7 +2,6 @@
 // Compute Shader for Sediment Transportation
 // Based on Mei et al. [2007] Equation 14 (Semi-Lagrangian)
 // 3.4 Sediment Transportation
-
 #version 430 core
 
 layout(local_size_x = 16, local_size_y = 16) in;

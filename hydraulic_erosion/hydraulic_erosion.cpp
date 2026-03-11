@@ -77,7 +77,6 @@ private:
     GLuint renderProgram;
     GLuint meshVAO, meshVBO, meshEBO;
     int meshIndexCount;
-
     int currentBuffer;
 
 public:

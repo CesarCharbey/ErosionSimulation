@@ -2,7 +2,6 @@
 // Compute Shader for Water Surface & Velocity Update
 // Based on Mei et al. [2007] Equations 6-9
 // 3.2.2 Water Surface and Velocity Field Update
-
 #version 430 core
 
 layout(local_size_x = 16, local_size_y = 16) in;
