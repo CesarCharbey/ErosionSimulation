@@ -12,6 +12,12 @@ layout(r32f, binding = 1) uniform writeonly image2D waterHeight_out;
 uniform float dt;
 uniform float rainRate;
 
+//River parameters
+uniform int enableRiver; 
+uniform vec2 RiverSourcePos;
+uniform float RiverRadius;
+uniform float RiverRate;
+
 void main() {
     ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
     ivec2 gridSize = imageSize(waterHeight_in);
@@ -24,6 +30,14 @@ void main() {
     
     // Equation 1: d1 = d + dt * r
     float d_new = d + dt * rainRate;
+    
+    if (enableRiver == 1){
+        float dist = distance(vec2(coords), RiverSourcePos);
+
+        if (dist < RiverRadius){
+            d_new += dt * RiverRate;
+        }
+    }
     
     imageStore(waterHeight_out, coords, vec4(d_new, 0.0, 0.0, 0.0));
 }

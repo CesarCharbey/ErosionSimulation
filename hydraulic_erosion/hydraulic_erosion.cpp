@@ -35,6 +35,12 @@ float GRAVITY = 9.81f;
 float PIPE_AREA = 1.5f;
 float PIPE_LENGTH = CELL_SIZE;
 
+//River parameters
+bool ENABLE_RIVER = false;
+float RIVER_RATE = 2.5f;
+float RIVER_RADIUS = 3.0f;
+glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); //position par défaut
+
 // Erosion
 float KC = 0.8f;  // Sediment capacity
 float KS = 0.05f; // Dissolving constant
@@ -268,6 +274,12 @@ public:
         glBindImageTexture(1, waterTex[WRITE], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "dt"), DT);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "rainRate"), RAIN_RATE);
+        
+        glUniform1i(glGetUniformLocation(waterIncrementShader, "enableRiver"), ENABLE_RIVER ? 1 : 0);
+        glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRate"), RIVER_RATE);
+        glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRadius"), RIVER_RADIUS);
+        glUniform2f(glGetUniformLocation(waterIncrementShader, "RiverSourcePos"), RIVER_SOURCE_POS.x, RIVER_SOURCE_POS.y);
+        
         glDispatchCompute(workGroupsX, workGroupsY, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -906,6 +918,17 @@ int main()
                 if (ImGui::Button("Regen Terrain") || changed)
                 {
                     simulation.initializeTerrain();
+                }
+            }
+
+            if (ImGui::CollapsingHeader("River Parameters", ImGuiTreeNodeFlags_DefaultOpen)){
+                ImGui::Checkbox("Enable River Source", &ENABLE_RIVER);
+                if (ENABLE_RIVER){
+                    ImGui::SliderFloat2("Position (X,Y)", &RIVER_SOURCE_POS[0], 0.0f, (float)GRID_SIZE);
+                    ImGui::SliderFloat("River Rate", &RIVER_RATE, 0.1f, 10.0f);
+                    ImGui::SliderFloat("River Radius", &RIVER_RADIUS, 1.0f, 20.0f);
+
+                    ImGui::TextColored(ImVec4(1.0f,1.0f, 0.0f, 1.0f), "Try to put the source on a slope to let gravity pull the water down");
                 }
             }
 
