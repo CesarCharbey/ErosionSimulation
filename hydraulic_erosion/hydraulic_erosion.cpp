@@ -15,7 +15,18 @@
 #include <fstream>
 #include <sstream>
 
-// Helper function to read a file into a string
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+int TERRAIN_MODE = 1;
+int CURRENT_HEIGHTMAP = 0;
+const char *HEIGHTMAP_FILES[] = {
+    "heightmaps/heightmap1.png",
+    "heightmaps/AlpeEcraseTaMere.png",
+    "heightmaps/AlpeUnPeuMoinsEcrasseTaMere.png",
+
+};
+
 std::string loadShaderSourceFromFile(const char *filepath)
 {
     std::ifstream file(filepath);
@@ -168,112 +179,131 @@ public:
 
     void initializeTerrain()
     {
-        // Helpers for noise generation
-        auto hash = [](float n)
-        { return std::fmod(std::sin(n) * 43758.5453f, 1.0f); };
+        std::vector<float> heightData(GRID_SIZE * GRID_SIZE, 0.0f);
 
-        auto noise = [&](float x, float y)
+        if (TERRAIN_MODE == 1)
         {
-            float ix = std::floor(x), iy = std::floor(y);
-            float fx = x - ix, fy = y - iy;
-            float ux = fx * fx * (3.0f - 2.0f * fx);
-            float uy = fy * fy * (3.0f - 2.0f * fy);
-            float n = ix + iy * 57.0f;
-            return (hash(n) * (1.0f - ux) + hash(n + 1.0f) * ux) * (1.0f - uy) +
-                   (hash(n + 57.0f) * (1.0f - ux) + hash(n + 58.0f) * ux) * uy;
-        };
+            // --- MODE HEIGHTMAP ---
+            int width, height, channels;
+            // On force la lecture en 1 canal (niveaux de gris)
+            unsigned char *img = stbi_load(HEIGHTMAP_FILES[CURRENT_HEIGHTMAP], &width, &height, &channels, 1);
 
-        // FBM (Hill-like)
-        auto fbm = [&](float x, float y, int octaves)
-        {
-            float v = 0.0f, a = 0.5f;
-            float shift = 100.0f;
-            for (int i = 0; i < octaves; ++i)
+            if (img)
             {
-                v += a * noise(x, y);
-                x = x * 2.0f + shift;
-                y = y * 2.0f + shift;
-                a *= 0.5f;
+                std::cout << "Heightmap chargee : " << HEIGHTMAP_FILES[CURRENT_HEIGHTMAP] << " (" << width << "x" << height << ")" << std::endl;
+                for (int y = 0; y < GRID_SIZE; y++)
+                {
+                    for (int x = 0; x < GRID_SIZE; x++)
+                    {
+                        // Mise à l'échelle si l'image n'est pas exactement de la taille GRID_SIZE
+                        int imgX = (x * width) / GRID_SIZE;
+                        int imgY = (y * height) / GRID_SIZE;
+
+                        // Lecture de la valeur du pixel (0 à 255) convertie entre 0.0 et 1.0
+                        float val = img[imgY * width + imgX] / 255.0f;
+
+                        // On applique la hauteur maximale (MOUNTAIN_HEIGHT)
+                        float h = val * MOUNTAIN_HEIGHT;
+
+                        // Sécurité pour les bords
+                        if (x <= 1 || x >= GRID_SIZE - 2 || y <= 1 || y >= GRID_SIZE - 2)
+                            h = 0.0f;
+                        if (h < 1.0f)
+                            h = 1.0f;
+
+                        heightData[y * GRID_SIZE + x] = h;
+                    }
+                }
+                stbi_image_free(img);
             }
-            return v;
-        };
-
-        // RIDGED NOISE
-        // The absolute value creates sharp peaks (V-shaped)
-        auto ridge = [&](float x, float y, int octaves)
-        {
-            float v = 0.0f, a = 0.5f;
-            float prev = 1.0f;
-            float shift = 100.0f;
-            for (int i = 0; i < octaves; ++i)
+            else
             {
-                float n = 1.0f - std::abs(noise(x, y) * 2.0f - 1.0f);
-                n = pow(n, 2.0f);
-                v += n * a * prev;
-                prev = n;
-                x = x * 2.0f + shift;
-                y = y * 2.0f + shift;
-                a *= 0.5f;
-            }
-            return v;
-        };
-
-        std::vector<float> heightData(GRID_SIZE * GRID_SIZE);
-        float seed = TERRAIN_SEED;
-
-        for (int y = 0; y < GRID_SIZE; y++)
-        {
-            for (int x = 0; x < GRID_SIZE; x++)
-            {
-                float nx = (float)x / GRID_SIZE * 2.0f - 1.0f;
-                float ny = (float)y / GRID_SIZE * 2.0f - 1.0f;
-
-                // Low frequencies for large mountain ranges (ridged noise)
-                float mountains = ridge((nx + seed) * MOUNTAIN_FREQ, (ny + seed) * MOUNTAIN_FREQ, 8);
-
-                // FBM to add base terrain variation
-                float base = fbm((nx + seed) * BASE_FREQ, (ny + seed) * BASE_FREQ, 6);
-
-                // Mix : Mountains (65) + Base (15)
-                float h = mountains * MOUNTAIN_HEIGHT + base * BASE_HEIGHT;
-
-                float dist = sqrt(nx * nx + ny * ny);
-                float distort = fbm((nx + seed) * 5.0f, (ny + seed) * 5.0f, 3) * 0.25f;
-                float distortedDist = dist + distort;
-
-                float mask = 1.0f - glm::smoothstep(0.65f, 0.95f, distortedDist);
-                h *= mask;
-
-                // Small Details for Terrain Variation
-                float grain = noise(nx * 80.0f, ny * 80.0f) * 0.4f; // +/- 40cm
-                h += grain;
-
-                // Minimum Height
-                if (h < 1.0f)
-                    h = 1.0f;
-
-                // Force zero height at borders to avoid artifacts
-                if (x <= 1 || x >= GRID_SIZE - 2 || y <= 1 || y >= GRID_SIZE - 2)
-                    h = 0.0f;
-
-                heightData[y * GRID_SIZE + x] = h;
+                std::cerr << "ERREUR: Impossible de charger la heightmap : " << HEIGHTMAP_FILES[CURRENT_HEIGHTMAP] << std::endl;
+                std::cerr << "Raison : " << stbi_failure_reason() << std::endl;
+                // Si ça rate, on bascule en mode procédural par sécurité
+                TERRAIN_MODE = 0;
             }
         }
 
-        // Terrain Texture
+        if (TERRAIN_MODE == 0)
+        {
+            // --- MODE PROCÉDURAL (Ton ancien code exact) ---
+            auto hash = [](float n)
+            { return std::fmod(std::sin(n) * 43758.5453f, 1.0f); };
+            auto noise = [&](float x, float y)
+            {
+                float ix = std::floor(x), iy = std::floor(y);
+                float fx = x - ix, fy = y - iy;
+                float ux = fx * fx * (3.0f - 2.0f * fx);
+                float uy = fy * fy * (3.0f - 2.0f * fy);
+                float n = ix + iy * 57.0f;
+                return (hash(n) * (1.0f - ux) + hash(n + 1.0f) * ux) * (1.0f - uy) +
+                       (hash(n + 57.0f) * (1.0f - ux) + hash(n + 58.0f) * ux) * uy;
+            };
+            auto fbm = [&](float x, float y, int octaves)
+            {
+                float v = 0.0f, a = 0.5f, shift = 100.0f;
+                for (int i = 0; i < octaves; ++i)
+                {
+                    v += a * noise(x, y);
+                    x = x * 2.0f + shift;
+                    y = y * 2.0f + shift;
+                    a *= 0.5f;
+                }
+                return v;
+            };
+            auto ridge = [&](float x, float y, int octaves)
+            {
+                float v = 0.0f, a = 0.5f, prev = 1.0f, shift = 100.0f;
+                for (int i = 0; i < octaves; ++i)
+                {
+                    float n = 1.0f - std::abs(noise(x, y) * 2.0f - 1.0f);
+                    n = pow(n, 2.0f);
+                    v += n * a * prev;
+                    prev = n;
+                    x = x * 2.0f + shift;
+                    y = y * 2.0f + shift;
+                    a *= 0.5f;
+                }
+                return v;
+            };
+
+            float seed = TERRAIN_SEED;
+            for (int y = 0; y < GRID_SIZE; y++)
+            {
+                for (int x = 0; x < GRID_SIZE; x++)
+                {
+                    float nx = (float)x / GRID_SIZE * 2.0f - 1.0f;
+                    float ny = (float)y / GRID_SIZE * 2.0f - 1.0f;
+                    float mountains = ridge((nx + seed) * MOUNTAIN_FREQ, (ny + seed) * MOUNTAIN_FREQ, 8);
+                    float base = fbm((nx + seed) * BASE_FREQ, (ny + seed) * BASE_FREQ, 6);
+                    float h = mountains * MOUNTAIN_HEIGHT + base * BASE_HEIGHT;
+                    float dist = sqrt(nx * nx + ny * ny);
+                    float distort = fbm((nx + seed) * 5.0f, (ny + seed) * 5.0f, 3) * 0.25f;
+                    float mask = 1.0f - glm::smoothstep(0.65f, 0.95f, dist + distort);
+                    h *= mask;
+                    h += noise(nx * 80.0f, ny * 80.0f) * 0.4f;
+                    if (h < 1.0f)
+                        h = 1.0f;
+                    if (x <= 1 || x >= GRID_SIZE - 2 || y <= 1 || y >= GRID_SIZE - 2)
+                        h = 0.0f;
+                    heightData[y * GRID_SIZE + x] = h;
+                }
+            }
+        }
+
+        // --- ENVOI AUX TEXTURES GPU ---
         glBindTexture(GL_TEXTURE_2D, terrainTex[0]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, heightData.data());
         glBindTexture(GL_TEXTURE_2D, terrainTex[1]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, heightData.data());
 
-        // Water Texture Initialized to zero
+        // Reset de l'eau et des sédiments
         std::vector<float> zeroData(GRID_SIZE * GRID_SIZE, 0.0f);
         glBindTexture(GL_TEXTURE_2D, waterTex[0]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, zeroData.data());
         glBindTexture(GL_TEXTURE_2D, waterTex[1]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, zeroData.data());
-
-        // Reset of Sediment Texture
         glBindTexture(GL_TEXTURE_2D, sedimentTex[0]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, zeroData.data());
         glBindTexture(GL_TEXTURE_2D, sedimentTex[1]);
@@ -1008,18 +1038,35 @@ int main()
                 ImGui::SliderFloat("Talus Angle", &TALUS_ANGLE, 0.0f, 1.5f);
             }
 
-            if (ImGui::CollapsingHeader("Generation Terrain"))
+            if (ImGui::CollapsingHeader("Generation Terrain / Heightmap", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                ImGui::Text("This settings affect terrain shape.");
                 bool changed = false;
 
-                changed |= ImGui::SliderFloat("Seed", &TERRAIN_SEED, 0.0f, 100.0f);
-                changed |= ImGui::SliderFloat("Mountain Freq", &MOUNTAIN_FREQ, 0.1f, 5.0f);
-                changed |= ImGui::SliderFloat("Mountain Height", &MOUNTAIN_HEIGHT, 10.0f, 150.0f);
-                changed |= ImGui::SliderFloat("Freq Base", &BASE_FREQ, 0.1f, 10.0f);
-                changed |= ImGui::SliderFloat("Haut Base", &BASE_HEIGHT, 0.0f, 50.0f);
+                // Sélection du mode
+                ImGui::Text("Source du Terrain :");
+                changed |= ImGui::RadioButton("Procedural (Bruit)", &TERRAIN_MODE, 0);
+                ImGui::SameLine();
+                changed |= ImGui::RadioButton("Heightmap (Image)", &TERRAIN_MODE, 1);
 
-                if (ImGui::Button("Regen Terrain") || changed)
+                ImGui::Separator();
+
+                if (TERRAIN_MODE == 1)
+                {
+                    // Menu spécifique Heightmap
+                    changed |= ImGui::Combo("Choix Heightmap", &CURRENT_HEIGHTMAP, HEIGHTMAP_FILES, IM_ARRAYSIZE(HEIGHTMAP_FILES));
+                    changed |= ImGui::SliderFloat("Hauteur Max", &MOUNTAIN_HEIGHT, 10.0f, 300.0f);
+                }
+                else
+                {
+                    // Menu spécifique Procédural
+                    changed |= ImGui::SliderFloat("Seed", &TERRAIN_SEED, 0.0f, 100.0f);
+                    changed |= ImGui::SliderFloat("Mountain Freq", &MOUNTAIN_FREQ, 0.1f, 5.0f);
+                    changed |= ImGui::SliderFloat("Mountain Height", &MOUNTAIN_HEIGHT, 10.0f, 150.0f);
+                    changed |= ImGui::SliderFloat("Freq Base", &BASE_FREQ, 0.1f, 10.0f);
+                    changed |= ImGui::SliderFloat("Haut Base", &BASE_HEIGHT, 0.0f, 50.0f);
+                }
+
+                if (ImGui::Button("Générer / Recharger le Terrain") || changed)
                 {
                     simulation.initializeTerrain();
 
