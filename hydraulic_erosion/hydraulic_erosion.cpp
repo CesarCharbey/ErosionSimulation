@@ -35,11 +35,11 @@ float GRAVITY = 9.81f;
 float PIPE_AREA = 1.5f;
 float PIPE_LENGTH = CELL_SIZE;
 
-//River parameters
+// River parameters
 bool ENABLE_RIVER = false;
 float RIVER_RATE = 2.5f;
 float RIVER_RADIUS = 3.0f;
-glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); //position par défaut
+glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); // position par défaut
 
 // Erosion
 float KC = 0.8f;  // Sediment capacity
@@ -85,8 +85,20 @@ private:
     int meshIndexCount;
     int currentBuffer;
 
+    // Evaluation
+    GLuint timeQueries[3]; // [0] = Physics, [1] = Thermal, [2] = Render
+    // Variables to store the results in milliseconds
+    float gpuTimePhysics = 0.0f;
+    float gpuTimeThermal = 0.0f;
+    float gpuTimeRender = 0.0f;
+
 public:
     HydraulicErosion() : currentBuffer(0) {}
+
+    // Getters for Evaluation
+    float getPhysicsTime() const { return gpuTimePhysics; }
+    float getThermalTime() const { return gpuTimeThermal; }
+    float getRenderTime() const { return gpuTimeRender; }
 
     bool initialize()
     {
@@ -105,6 +117,14 @@ public:
 
         // Initialize terrain with some height data
         initializeTerrain();
+
+        // Initialize time queries for evaluation
+        glGenQueries(3, timeQueries);
+        for (int i = 0; i < 3; ++i)
+        {
+            glBeginQuery(GL_TIME_ELAPSED, timeQueries[i]);
+            glEndQuery(GL_TIME_ELAPSED);
+        }
 
         return true;
     }
@@ -269,17 +289,18 @@ public:
         // Results are stored in the WRITE buffer.
         // Pass 1: Water Increment (Rain)
         // Reads READ, Writes to WRITE
+        glBeginQuery(GL_TIME_ELAPSED, timeQueries[0]); // Start physics query
         glUseProgram(waterIncrementShader);
         glBindImageTexture(0, waterTex[READ], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
         glBindImageTexture(1, waterTex[WRITE], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "dt"), DT);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "rainRate"), RAIN_RATE);
-        
+
         glUniform1i(glGetUniformLocation(waterIncrementShader, "enableRiver"), ENABLE_RIVER ? 1 : 0);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRate"), RIVER_RATE);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRadius"), RIVER_RADIUS);
         glUniform2f(glGetUniformLocation(waterIncrementShader, "RiverSourcePos"), RIVER_SOURCE_POS.x, RIVER_SOURCE_POS.y);
-        
+
         glDispatchCompute(workGroupsX, workGroupsY, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -347,9 +368,11 @@ public:
         glUniform1f(glGetUniformLocation(evaporationShader, "dt"), DT);
         glUniform1f(glGetUniformLocation(evaporationShader, "Ke"), KE);
         glDispatchCompute(workGroupsX, workGroupsY, 1);
+        glEndQuery(GL_TIME_ELAPSED); // End physics query
 
         // Pass 7: Thermal Erosion
         // Reads Terrain[WRITE] (from erosion pass), Writes to Terrain[READ] (final)
+        glBeginQuery(GL_TIME_ELAPSED, timeQueries[1]); // Start thermal erosion query
         glUseProgram(thermalErosionShader);
         glBindImageTexture(0, terrainTex[WRITE], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
         glBindImageTexture(1, terrainTex[READ], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
@@ -358,7 +381,7 @@ public:
         glUniform1f(glGetUniformLocation(thermalErosionShader, "dt"), DT);
         glUniform1f(glGetUniformLocation(thermalErosionShader, "cellSize"), CELL_SIZE);
         glDispatchCompute(workGroupsX, workGroupsY, 1);
-
+        glEndQuery(GL_TIME_ELAPSED); // End thermal erosion query
         // Final Synchronization
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
@@ -368,6 +391,20 @@ public:
 
     void render(const glm::mat4 &viewProj, float time, const glm::vec3 &camPos, bool showSediment)
     {
+        // Retrieve the results from previous evaluation
+        GLuint64 elapsed;
+        glGetQueryObjectui64v(timeQueries[0], GL_QUERY_RESULT, &elapsed);
+        gpuTimePhysics = (float)elapsed / 1000000.0f;
+
+        glGetQueryObjectui64v(timeQueries[1], GL_QUERY_RESULT, &elapsed);
+        gpuTimeThermal = (float)elapsed / 1000000.0f;
+
+        glGetQueryObjectui64v(timeQueries[2], GL_QUERY_RESULT, &elapsed);
+        gpuTimeRender = (float)elapsed / 1000000.0f;
+
+        // Start render query
+        glBeginQuery(GL_TIME_ELAPSED, timeQueries[2]);
+
         glUseProgram(renderProgram);
 
         // Bind terrain and water textures
@@ -390,6 +427,8 @@ public:
 
         glBindVertexArray(meshVAO);
         glDrawElements(GL_TRIANGLES, meshIndexCount, GL_UNSIGNED_INT, 0);
+
+        glEndQuery(GL_TIME_ELAPSED); // End render query
     }
 
     bool loadShaders(); // Implementation below
@@ -803,7 +842,7 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable V-Sync
+    glfwSwapInterval(0); // Enable V-Sync
 
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
@@ -869,6 +908,15 @@ int main()
 
             ImGui::Text("FPS: %.1f", io.Framerate);
             ImGui::Separator();
+
+            ImGui::Text("--- GPU Performance (1 iter) ---");
+            ImGui::Text("Physics Simulation  : %.3f ms", simulation.getPhysicsTime());
+            ImGui::Text("Thermal Erosion     : %.3f ms", simulation.getThermalTime());
+            ImGui::Text("Visual Rendering    : %.3f ms", simulation.getRenderTime());
+            float totalCycle = simulation.getPhysicsTime() + simulation.getThermalTime() + simulation.getRenderTime();
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Total Cycle Time: %.3f ms", totalCycle);
+            ImGui::Separator();
+
             if (ImGui::Checkbox("Show Sediment (Scientific Mode)", &showSediment))
             {
                 // Toggle sediment visualization
@@ -921,14 +969,16 @@ int main()
                 }
             }
 
-            if (ImGui::CollapsingHeader("River Parameters", ImGuiTreeNodeFlags_DefaultOpen)){
+            if (ImGui::CollapsingHeader("River Parameters", ImGuiTreeNodeFlags_DefaultOpen))
+            {
                 ImGui::Checkbox("Enable River Source", &ENABLE_RIVER);
-                if (ENABLE_RIVER){
+                if (ENABLE_RIVER)
+                {
                     ImGui::SliderFloat2("Position (X,Y)", &RIVER_SOURCE_POS[0], 0.0f, (float)GRID_SIZE);
                     ImGui::SliderFloat("River Rate", &RIVER_RATE, 0.1f, 10.0f);
                     ImGui::SliderFloat("River Radius", &RIVER_RADIUS, 1.0f, 20.0f);
 
-                    ImGui::TextColored(ImVec4(1.0f,1.0f, 0.0f, 1.0f), "Try to put the source on a slope to let gravity pull the water down");
+                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Try to put the source on a slope to let gravity pull the water down");
                 }
             }
 
