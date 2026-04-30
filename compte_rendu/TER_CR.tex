@@ -111,33 +111,36 @@ Dans l'architecture de notre pipeline de Compute Shaders, l'érosion thermique c
 \section{Résultats et Évaluation}
 
 \subsection{Analyse des Performances et Benchmarks}
-Afin de quantifier avec précision les gains octroyés par notre architecture GPU moderne, nous avons développé en parallèle une implémentation rigoureusement équivalente s'exécutant intégralement sur le processeur (CPU). Cette version CPU nous servira de référence (\textit{baseline}) absolue pour calculer le ratio d'accélération matériel et évaluer les performances globales de notre projet sur des cartes de hauteurs identiques.
+Afin de quantifier avec précision les gains octroyés par notre architecture GPU moderne, nous avons développé en parallèle une implémentation rigoureusement équivalente s'exécutant intégralement sur le processeur central (CPU). Cette version CPU nous sert de référence (\textit{baseline}) absolue pour calculer le ratio d'accélération matériel (\textit{speedup}) et évaluer les performances globales de notre projet sur des cartes de hauteurs identiques.
 
-En outre, notre référentiel d'évaluation s'appuie sur les données formellement documentées par Mei et al. en 2007. Lors de leurs expérimentations initiales (réalisées sur un Pentium IV 2.40GHz équipé d'une NVIDIA GeForce 8800 GTX), les auteurs mesuraient, pour une grille de résolution de $1024 \times 1024$, un temps de simulation de 6.65\,ms par passe physique et un temps de rendu visuel de 10.31\,ms. Ces valeurs portaient le temps de cycle complet à 16.95\,ms, correspondant à une fréquence d'environ 59 cycles par seconde (CPS). Pour des domaines plus vastes s'étendant sur $2048 \times 2048$ cellules, leur temps de cycle chutait considérablement à 62.50\,ms (soit 16 CPS).
+Notre référentiel d'évaluation s'appuie également sur les données formellement documentées par Mei et al. en 2007 \cite{MDH07}. Lors de leurs expérimentations initiales (réalisées sur un processeur Pentium IV 2.40GHz équipé d'une carte graphique NVIDIA GeForce 8800 GTX), les auteurs mesuraient, pour une grille de résolution de $1024 \times 1024$, un temps de simulation de 6.65\,ms par passe physique et un temps de rendu visuel de 10.31\,ms. Ces valeurs portaient le temps de cycle complet à 16.95\,ms, correspondant à une fréquence d'environ 59 cycles par seconde (CPS).
 
-Le tableau \ref{tab:perf} illustre l'approche comparative que nous utiliserons une fois nos mesures matérielles finalisées. Les temps d'exécution sur notre GPU seront extraits via des requêtes asynchrones (\textit{Timestamp Queries} OpenGL) afin d'isoler strictement la charge de calcul des éventuelles latences processeur.
+Le tableau \ref{tab:perf} présente les résultats de profilage comparatifs entre l'étude de 2007, notre implémentation CPU, et notre architecture GPU (Compute Shaders). Les temps d'exécution GPU ont été extraits via des requêtes asynchrones (\textit{Timestamp Queries} OpenGL) afin d'isoler strictement la charge de calcul des latences processeur. Nos mesures ont été effectuées sur une configuration matérielle milieu de gamme moderne (AMD Radeon RX 5700, processeur AMD Ryzen 5 2600, résolution d'affichage 1440p).
 
 \begin{table}[htbp]
     \centering
     \resizebox{\columnwidth}{!}{%
         \begin{tabular}{lccc}
             \toprule
-            \textbf{Étape de calcul} & \textbf{Mei et al. (2007)} & \textbf{Notre CPU} & \textbf{Notre GPU} \\
+            \textbf{Étape de calcul} & \textbf{Mei et al. (2007)} & \textbf{Notre CPU}  & \textbf{Notre GPU} \\
             \midrule
-            Simulation Physique      & 6.65 ms                    & à mesurer          & à mesurer          \\
-            Érosion Thermique        & N/A                        & à mesurer          & à mesurer          \\
-            Rendu Visuel             & 10.31 ms                   & à mesurer          & à mesurer          \\
+            Simulation Physique      & 6.65 ms                    & 726.215 ms          & 0.637 ms           \\
+            Érosion Thermique        & N/A                        & 120.169 ms          & 0.033 ms           \\
+            Rendu Visuel             & 10.31 ms                   & 15.607 ms           & 0.453 ms           \\
             \midrule
-            \textbf{Temps de Cycle}  & \textbf{16.95 ms}          & \textbf{à mesurer} & \textbf{à mesurer} \\
+            \textbf{Temps de Cycle}  & \textbf{16.95 ms}          & \textbf{861.992 ms} & \textbf{1.123 ms}  \\
             \bottomrule
         \end{tabular}%
     }
-    \caption{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données de Mei et al. servent de référence historique (GeForce 8800 GTX).}
+    \caption{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données de Mei et al. \cite{MDH07} servent de référence historique. Les tests modernes utilisent un Ryzen 5 2600 et une RX 5700.}
     \label{tab:perf}
 \end{table}
 
-Il est important de noter que notre architecture permet de dissocier la fréquence de la simulation physique de la fréquence de rendu visuel (découplage). Il est ainsi possible d'exécuter plusieurs dizaines d'itérations physiques entre chaque rafraîchissement d'écran, offrant la possibilité d'accélérer artificiellement l'écoulement du temps géologique tout en conservant une grande fluidité interactive de navigation.
+Les résultats obtenus confirment de manière spectaculaire la supériorité de l'architecture GPU pour la résolution de modèles Eulériens sur grilles. L'implémentation CPU séquentielle s'avère totalement inadaptée au temps réel, affichant un temps de cycle critique de près de 862\,ms (soit à peine 1,16 image par seconde). À l'inverse, l'implémentation sur Compute Shaders exécute le même cycle en 1,12\,ms, atteignant une fréquence interactive de l'ordre de 890 FPS. Cela représente un facteur d'accélération global impressionnant de plus de \textbf{767x} par rapport au CPU.
 
+Cette accélération est particulièrement notable sur la passe d'érosion thermique. Reposant sur des calculs purement locaux (voisinage de von Neumann à 4 cellules), cet algorithme est "naturellement parallélisable" (\textit{embarrassingly parallel}). Le passage d'une exécution séquentielle CPU (120,16\,ms) à une exécution massivement parallèle GPU via mémoire partagée (0,033\,ms) illustre un gain de performance supérieur à un facteur 3600. Le coût de notre amélioration thermique s'avère ainsi parfaitement négligeable sur GPU par rapport au gain géomorphologique structurel qu'elle apporte.
+
+Enfin, il est crucial de noter que notre architecture logicielle permet de dissocier la fréquence de la simulation physique de la fréquence de rendu visuel (découplage). Étant donné la vaste réserve de puissance de calcul matérielle libérée (framerate effectif d'environ 900 FPS), il est possible d'exécuter plusieurs dizaines d'itérations physiques complètes entre chaque rafraîchissement d'écran (\texttt{ITERATIONS\_\allowbreak PER\_\allowbreak FRAME}), offrant la capacité d'accélérer artificiellement l'écoulement du temps géologique tout en conservant une fluidité interactive ininterrompue lors de la navigation.
 \subsection{Qualité Visuelle et Interactivité}
 L'ajout de l'érosion thermique permet de briser les arrêtes non naturelles créées par le creusement hydraulique, résultant en des formations de type éboulis beaucoup plus proches de la réalité. Par ailleurs, notre simulateur agit comme un véritable outil de conception en temps réel : grâce à une interface graphique dédiée, l'utilisateur peut ajuster à la volée les constantes géologiques ou introduire dynamiquement des sources fluviales pour observer l'adaptation organique du réseau de drainage.
 

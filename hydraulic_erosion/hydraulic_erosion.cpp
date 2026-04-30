@@ -64,6 +64,7 @@ int ITERATIONS_PER_FRAME = 1;
 
 bool useGPU = true;
 float lastPhysicsTime = 0.0f;
+float cpuTransferTime = 0.0f;
 HydraulicErosionCPU *cpuSim = nullptr;
 
 class HydraulicErosion
@@ -86,14 +87,6 @@ private:
     GLuint renderProgram;
     GLuint meshVAO, meshVBO, meshEBO;
     int meshIndexCount;
-    int currentBuffer;
-
-    // Evaluation
-    GLuint timeQueries[3]; // [0] = Physics, [1] = Thermal, [2] = Render
-    // Variables to store the results in milliseconds
-    float gpuTimePhysics = 0.0f;
-    float gpuTimeThermal = 0.0f;
-    float gpuTimeRender = 0.0f;
 
     // Evaluation
     GLuint timeQueries[3]; // [0] = Physics, [1] = Thermal, [2] = Render
@@ -955,25 +948,30 @@ int main()
 
             ImGui::Separator();
 
-            // GPU Performance Metrics
-            ImGui::Text("--- GPU Performance (1 iter) ---");
-            ImGui::Text("Physics Simulation  : %.3f ms", simulation.getPhysicsTime());
-            ImGui::Text("Thermal Erosion     : %.3f ms", simulation.getThermalTime());
-            ImGui::Text("Visual Rendering    : %.3f ms", simulation.getRenderTime());
-            float totalCycle = simulation.getPhysicsTime() + simulation.getThermalTime() + simulation.getRenderTime();
-            ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Total Cycle Time: %.3f ms", totalCycle);
+            ImGui::Text("--- Performance (1 iter) ---");
+            if (useGPU)
+            {
+                ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Mode : GPU (Compute Shaders)");
+                ImGui::Text("Physics Simulation : %.3f ms", simulation.getPhysicsTime());
+                ImGui::Text("Thermal Erosion    : %.3f ms", simulation.getThermalTime());
+                ImGui::Text("Visual Rendering   : %.3f ms", simulation.getRenderTime());
+                float totalCycle = simulation.getPhysicsTime() + simulation.getThermalTime() + simulation.getRenderTime();
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "CPS: %.3f ms", totalCycle);
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Mode : CPU (C++)");
+                ImGui::Text("Physics Simulation : %.3f ms", cpuSim->timePhysics);
+                ImGui::Text("Thermal Erosion    : %.3f ms", cpuSim->timeThermal);
+                float totalRender = cpuTransferTime + simulation.getRenderTime();
+                ImGui::Text("Visual Rendering   : %.3f ms", totalRender);
+                float totalCycle = cpuSim->timePhysics + cpuSim->timeThermal + totalRender;
+                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "CPS: %.3f ms", totalCycle);
+            }
+            ImGui::Separator();
+            ImGui::Checkbox("Use GPU", &useGPU);
             ImGui::Separator();
 
-            // CPU
-            ImGui::PushStyleColor(ImGuiCol_Text, useGPU ? ImVec4(0.2f, 1.0f, 0.2f, 1.0f) : ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
-            ImGui::Checkbox("Utiliser le GPU (Decocher = CPU)", &useGPU);
-            ImGui::PopStyleColor();
-
-            ImGui::Text("Temps de calcul physique : %.2f ms", lastPhysicsTime);
-            if (!useGPU)
-            {
-                ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Mode CPU actif : Chute de FPS normale.");
-            }
             ImGui::Separator();
             if (ImGui::Checkbox("Show Sediment (Scientific Mode)", &showSediment))
             {
@@ -1082,7 +1080,6 @@ int main()
             ImGui::End();
         }
 
-        auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < ITERATIONS_PER_FRAME; ++i)
         {
             if (useGPU)
@@ -1110,8 +1107,6 @@ int main()
                 cpuSim->simulationStep(isPlacingRiver);
             }
         }
-        auto end = std::chrono::high_resolution_clock::now();
-        lastPhysicsTime = std::chrono::duration<double, std::milli>(end - start).count();
 
         if (useGPU != wasUsingGPU)
         {
@@ -1184,6 +1179,26 @@ int main()
         }
         // Render Scene
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // RAM transfer for CPU mode
+        if (!useGPU)
+        {
+            auto tStart = std::chrono::high_resolution_clock::now();
+            int buf = simulation.currentBuffer;
+
+            glBindTexture(GL_TEXTURE_2D, simulation.terrainTex[buf]);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, cpuSim->terrain[0].data());
+
+            glBindTexture(GL_TEXTURE_2D, simulation.waterTex[buf]);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, cpuSim->water[0].data());
+
+            glBindTexture(GL_TEXTURE_2D, simulation.sedimentTex[buf]);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, cpuSim->sediment[0].data());
+
+            auto tEnd = std::chrono::high_resolution_clock::now();
+            cpuTransferTime = std::chrono::duration<float, std::milli>(tEnd - tStart).count();
+        }
+
         simulation.render(viewProj, (float)glfwGetTime(), cameraPos, showSediment, isPlacingRiver, hoverGridPos);
 
         // ImGui Render
