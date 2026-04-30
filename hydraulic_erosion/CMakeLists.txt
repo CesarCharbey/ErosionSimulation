@@ -18,7 +18,6 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/imgui_draw.cpp
     ${IMGUI_DIR}/imgui_tables.cpp
     ${IMGUI_DIR}/imgui_widgets.cpp
-    ${IMGUI_DIR}/HydraulicsErosionCPU.cpp
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
@@ -28,6 +27,7 @@ set(IMGUI_SOURCES
 # --- EXECUTABLE ---
 add_executable(hydraulic_erosion 
     hydraulic_erosion.cpp 
+    hydraulic_erosionCPU.cpp
     ${IMGUI_SOURCES}
 )
 

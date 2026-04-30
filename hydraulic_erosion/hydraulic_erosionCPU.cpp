@@ -278,12 +278,12 @@ public:
                     float diff = h - terrain[WRITE][neighbors[n]];
                     if (diff > maxDiff)
                     {
-                        float transfer = std::min((diff - maxDiff) * thermalErosionRate * dt, (diff - maxDiff) * 0.5f);
+                        float transfer = std::min((diff - maxDiff) * thermalErosionRate * dt, (diff - maxDiff) * 0.2f);
                         heightChange -= transfer;
                     }
                     else if (diff < -maxDiff)
                     {
-                        float transfer = std::min((-diff - maxDiff) * thermalErosionRate * dt, (-diff - maxDiff) * 0.5f);
+                        float transfer = std::min((-diff - maxDiff) * thermalErosionRate * dt, (-diff - maxDiff) * 0.2f);
                         heightChange += transfer;
                     }
                 }

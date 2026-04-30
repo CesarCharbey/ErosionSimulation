@@ -2,7 +2,7 @@
 // Modern GPU-based Hydraulic Erosion System
 // Based on Mei et al. [2007] with Compute Shader implementation
 #include "imgui.h"
-#include "HydraulicsErosionCPU.cpp"
+#include "hydraulic_erosionCPU.cpp"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GL/glew.h>
@@ -52,7 +52,7 @@ float PIPE_LENGTH = CELL_SIZE;
 bool ENABLE_RIVER = false;
 float RIVER_RATE = 2.5f;
 float RIVER_RADIUS = 3.0f;
-glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); // position par défaut
+glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); // Default position of the river source
 
 // Erosion
 float KC = 0.8f;  // Sediment capacity
@@ -151,7 +151,7 @@ public:
     void createTextures()
     {
         // Helper lambda for creating 2D float textures
-        auto createTexture = [](GLenum internalFormat, int components)
+        auto createTexture = [](GLenum internalFormat)
         {
             GLuint tex;
             glGenTextures(1, &tex);
@@ -165,47 +165,39 @@ public:
         };
 
         // Create double-buffered textures
-        terrainTex[0] = createTexture(GL_R32F, 1);
-        terrainTex[1] = createTexture(GL_R32F, 1);
-        waterTex[0] = createTexture(GL_R32F, 1);
-        waterTex[1] = createTexture(GL_R32F, 1);
-        sedimentTex[0] = createTexture(GL_R32F, 1);
-        sedimentTex[1] = createTexture(GL_R32F, 1);
+        terrainTex[0] = createTexture(GL_R32F);
+        terrainTex[1] = createTexture(GL_R32F);
+        waterTex[0] = createTexture(GL_R32F);
+        waterTex[1] = createTexture(GL_R32F);
+        sedimentTex[0] = createTexture(GL_R32F);
+        sedimentTex[1] = createTexture(GL_R32F);
 
         // Single-buffered textures
-        fluxTex = createTexture(GL_RGBA32F, 4);
-        velocityTex = createTexture(GL_RG32F, 2);
+        fluxTex = createTexture(GL_RGBA32F);
+        velocityTex = createTexture(GL_RG32F);
     }
 
     void initializeTerrain()
     {
         std::vector<float> heightData(GRID_SIZE * GRID_SIZE, 0.0f);
 
-        if (TERRAIN_MODE == 1)
+        if (TERRAIN_MODE == 1) // HeightMap
         {
-            // --- MODE HEIGHTMAP ---
             int width, height, channels;
-            // On force la lecture en 1 canal (niveaux de gris)
+            // 1 channel reading (grayscale)
             unsigned char *img = stbi_load(HEIGHTMAP_FILES[CURRENT_HEIGHTMAP], &width, &height, &channels, 1);
 
             if (img)
             {
-                std::cout << "Heightmap chargee : " << HEIGHTMAP_FILES[CURRENT_HEIGHTMAP] << " (" << width << "x" << height << ")" << std::endl;
+                std::cout << "Heightmap loaded : " << HEIGHTMAP_FILES[CURRENT_HEIGHTMAP] << " (" << width << "x" << height << ")" << std::endl;
                 for (int y = 0; y < GRID_SIZE; y++)
                 {
                     for (int x = 0; x < GRID_SIZE; x++)
                     {
-                        // Mise à l'échelle si l'image n'est pas exactement de la taille GRID_SIZE
                         int imgX = (x * width) / GRID_SIZE;
                         int imgY = (y * height) / GRID_SIZE;
-
-                        // Lecture de la valeur du pixel (0 à 255) convertie entre 0.0 et 1.0
                         float val = img[imgY * width + imgX] / 255.0f;
-
-                        // On applique la hauteur maximale (MOUNTAIN_HEIGHT)
                         float h = val * MOUNTAIN_HEIGHT;
-
-                        // Sécurité pour les bords
                         if (x <= 1 || x >= GRID_SIZE - 2 || y <= 1 || y >= GRID_SIZE - 2)
                             h = 0.0f;
                         if (h < 1.0f)
@@ -218,16 +210,15 @@ public:
             }
             else
             {
-                std::cerr << "ERREUR: Impossible de charger la heightmap : " << HEIGHTMAP_FILES[CURRENT_HEIGHTMAP] << std::endl;
-                std::cerr << "Raison : " << stbi_failure_reason() << std::endl;
-                // Si ça rate, on bascule en mode procédural par sécurité
+                std::cerr << "ERROR : Failed to load heightmap : " << HEIGHTMAP_FILES[CURRENT_HEIGHTMAP] << std::endl;
+                std::cerr << "Reason : " << stbi_failure_reason() << std::endl;
                 TERRAIN_MODE = 0;
             }
         }
 
-        if (TERRAIN_MODE == 0)
+        if (TERRAIN_MODE == 0) // Procedural
         {
-            // --- MODE PROCÉDURAL (Ton ancien code exact) ---
+            // Procedural terrain generation (FBM + Ridge Noise)
             auto hash = [](float n)
             { return std::fmod(std::sin(n) * 43758.5453f, 1.0f); };
             auto noise = [&](float x, float y)
@@ -292,13 +283,13 @@ public:
             }
         }
 
-        // --- ENVOI AUX TEXTURES GPU ---
+        // Sending texture to GPU
         glBindTexture(GL_TEXTURE_2D, terrainTex[0]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, heightData.data());
         glBindTexture(GL_TEXTURE_2D, terrainTex[1]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, heightData.data());
 
-        // Reset de l'eau et des sédiments
+        // Water and sediment start at 0
         std::vector<float> zeroData(GRID_SIZE * GRID_SIZE, 0.0f);
         glBindTexture(GL_TEXTURE_2D, waterTex[0]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, zeroData.data());
@@ -818,7 +809,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     {
         // Calculate forward and right vectors based on current angles
         float radX = glm::radians(cameraAngleX);
-        float radY = glm::radians(cameraAngleY);
+        // float radY = glm::radians(cameraAngleY);
 
         // Forward vector (projected on XZ plane)
         glm::vec3 forward(-sin(radX), 0.0f, -cos(radX));
@@ -832,7 +823,7 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     }
 }
 
-void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow * /*window*/, double /*xoffset*/, double yoffset)
 {
     if (ImGui::GetIO().WantCaptureMouse)
         return;
@@ -901,7 +892,7 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0); // Enable V-Sync
+    glfwSwapInterval(0); // Enable V-Sync (0 = off, 1 = on)
 
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
@@ -914,7 +905,7 @@ int main()
         std::cerr << "Failed to initialize GLEW: " << glewGetErrorString(err) << std::endl;
     }
 
-    // --- IMGUI INITIALIZATION ---
+    // ImGui Initialization
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -927,7 +918,6 @@ int main()
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 430");
-    // -----------------------------
 
     // OpenGL settings
     glEnable(GL_DEPTH_TEST);
@@ -978,7 +968,7 @@ int main()
 
             ImGui::Separator();
 
-            ImGui::Text("--- Performance (1 iter) ---");
+            ImGui::Text("Performance (1 iter)");
             if (useGPU)
             {
                 ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Mode : GPU (Compute Shaders)");
@@ -1042,9 +1032,8 @@ int main()
             {
                 bool changed = false;
 
-                // Sélection du mode
-                ImGui::Text("Source du Terrain :");
-                changed |= ImGui::RadioButton("Procedural (Bruit)", &TERRAIN_MODE, 0);
+                ImGui::Text("Terrain :");
+                changed |= ImGui::RadioButton("Procedural (Noise)", &TERRAIN_MODE, 0);
                 ImGui::SameLine();
                 changed |= ImGui::RadioButton("Heightmap (Image)", &TERRAIN_MODE, 1);
 
@@ -1052,21 +1041,19 @@ int main()
 
                 if (TERRAIN_MODE == 1)
                 {
-                    // Menu spécifique Heightmap
-                    changed |= ImGui::Combo("Choix Heightmap", &CURRENT_HEIGHTMAP, HEIGHTMAP_FILES, IM_ARRAYSIZE(HEIGHTMAP_FILES));
-                    changed |= ImGui::SliderFloat("Hauteur Max", &MOUNTAIN_HEIGHT, 10.0f, 300.0f);
+                    changed |= ImGui::Combo("Heightmap List", &CURRENT_HEIGHTMAP, HEIGHTMAP_FILES, IM_ARRAYSIZE(HEIGHTMAP_FILES));
+                    changed |= ImGui::SliderFloat("Max Height", &MOUNTAIN_HEIGHT, 10.0f, 300.0f);
                 }
                 else
                 {
-                    // Menu spécifique Procédural
                     changed |= ImGui::SliderFloat("Seed", &TERRAIN_SEED, 0.0f, 100.0f);
                     changed |= ImGui::SliderFloat("Mountain Freq", &MOUNTAIN_FREQ, 0.1f, 5.0f);
                     changed |= ImGui::SliderFloat("Mountain Height", &MOUNTAIN_HEIGHT, 10.0f, 150.0f);
-                    changed |= ImGui::SliderFloat("Freq Base", &BASE_FREQ, 0.1f, 10.0f);
-                    changed |= ImGui::SliderFloat("Haut Base", &BASE_HEIGHT, 0.0f, 50.0f);
+                    changed |= ImGui::SliderFloat("Base Frequency", &BASE_FREQ, 0.1f, 10.0f);
+                    changed |= ImGui::SliderFloat("Base Height", &BASE_HEIGHT, 0.0f, 50.0f);
                 }
 
-                if (ImGui::Button("Générer / Recharger le Terrain") || changed)
+                if (ImGui::Button("Generate / Reload Terrain") || changed)
                 {
                     simulation.initializeTerrain();
 
