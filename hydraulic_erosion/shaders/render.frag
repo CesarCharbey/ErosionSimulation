@@ -14,6 +14,9 @@ uniform float cellSize;
 uniform vec3 u_ViewPos;
 uniform float u_Time;
 uniform int u_ShowSediment; // 0 = Beautiful mode, 1 = Scientific mode
+uniform vec2 u_RiverPos;
+uniform float u_RiverRadius;
+uniform int u_ShowRiverPreview;
 
 // Simple Noise for water
 float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -130,5 +133,15 @@ void main() {
         FragColor = vec4(mix(groundColor, fluidColor, finalOpacity), 1.0);
     } else {
         FragColor = vec4(groundColor, 1.0);
+    }
+
+    if (u_ShowRiverPreview == 1) {
+        vec2 gridPos = WorldPos.xz / cellSize;
+        float distToRiver = distance(gridPos, u_RiverPos);
+        if (distToRiver < u_RiverRadius) {
+            vec3 previewColor = vec3(0.1, 0.6, 1.0);
+            float alpha = smoothstep(u_RiverRadius, u_RiverRadius - 1.0, distToRiver) * 0.5;
+            FragColor = vec4(mix(FragColor.rgb, previewColor, alpha), 1.0);
+        }
     }
 }

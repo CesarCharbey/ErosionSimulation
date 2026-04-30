@@ -2,6 +2,7 @@
 // Modern GPU-based Hydraulic Erosion System
 // Based on Mei et al. [2007] with Compute Shader implementation
 #include "imgui.h"
+#include "HydraulicsErosionCPU.cpp"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include <GL/glew.h>
@@ -9,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <chrono>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -60,13 +62,14 @@ float BASE_HEIGHT = 10.0f;     // Base height variation
 // Simulation speed
 int ITERATIONS_PER_FRAME = 1;
 
+bool useGPU = true;
+float lastPhysicsTime = 0.0f;
+HydraulicErosionCPU* cpuSim = nullptr;
+
 class HydraulicErosion
 {
 private:
     // Texture IDs for simulation
-    GLuint terrainTex[2];  // Double-buffered terrain height
-    GLuint waterTex[2];    // Double-buffered water height
-    GLuint sedimentTex[2]; // Double-buffered sediment
     GLuint fluxTex;        // Outflow flux (vec4: L,R,T,B)
     GLuint velocityTex;    // Velocity field (vec2: u,v)
 
@@ -83,9 +86,15 @@ private:
     GLuint renderProgram;
     GLuint meshVAO, meshVBO, meshEBO;
     int meshIndexCount;
-    int currentBuffer;
+    
 
 public:
+
+    GLuint terrainTex[2];  // Double-buffered terrain height
+    GLuint waterTex[2];    // Double-buffered water height
+    GLuint sedimentTex[2]; // Double-buffered sediment
+    int currentBuffer;
+
     HydraulicErosion() : currentBuffer(0) {}
 
     bool initialize()
@@ -252,7 +261,7 @@ public:
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, GRID_SIZE, GRID_SIZE, GL_RED, GL_FLOAT, zeroData.data());
     }
 
-    void simulationStep()
+    void simulationStep(bool isPlacingRiver)
     {
         const int workGroupsX = (GRID_SIZE + 15) / 16;
         const int workGroupsY = (GRID_SIZE + 15) / 16;
@@ -272,10 +281,12 @@ public:
         glUseProgram(waterIncrementShader);
         glBindImageTexture(0, waterTex[READ], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
         glBindImageTexture(1, waterTex[WRITE], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
+        int actuallyEmitWater = (ENABLE_RIVER && !isPlacingRiver) ? 1 : 0;
+        glUniform1i(glGetUniformLocation(waterIncrementShader, "enableRiver"), actuallyEmitWater);
+        
         glUniform1f(glGetUniformLocation(waterIncrementShader, "dt"), DT);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "rainRate"), RAIN_RATE);
-        
-        glUniform1i(glGetUniformLocation(waterIncrementShader, "enableRiver"), ENABLE_RIVER ? 1 : 0);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRate"), RIVER_RATE);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRadius"), RIVER_RADIUS);
         glUniform2f(glGetUniformLocation(waterIncrementShader, "RiverSourcePos"), RIVER_SOURCE_POS.x, RIVER_SOURCE_POS.y);
@@ -366,7 +377,7 @@ public:
         // currentBuffer remains valid for rendering.
     }
 
-    void render(const glm::mat4 &viewProj, float time, const glm::vec3 &camPos, bool showSediment)
+    void render(const glm::mat4 &viewProj, float time, const glm::vec3 &camPos, bool showSediment, bool isPlacingRiver, const glm::vec2& hoverPos)
     {
         glUseProgram(renderProgram);
 
@@ -387,6 +398,12 @@ public:
         glUniform1f(glGetUniformLocation(renderProgram, "u_Time"), time);
         glUniform3fv(glGetUniformLocation(renderProgram, "u_ViewPos"), 1, &camPos[0]);
         glUniform1i(glGetUniformLocation(renderProgram, "u_ShowSediment"), showSediment ? 1 : 0);
+
+        glm::vec2 renderRiverPos = isPlacingRiver ? hoverPos : RIVER_SOURCE_POS;
+        glUniform2fv(glGetUniformLocation(renderProgram, "u_RiverPos"), 1, &renderRiverPos[0]);
+        glUniform1f(glGetUniformLocation(renderProgram, "u_RiverRadius"), RIVER_RADIUS);
+        int showPreview = (isPlacingRiver) ? 1 : 0;
+        glUniform1i(glGetUniformLocation(renderProgram, "u_ShowRiverPreview"), showPreview);
 
         glBindVertexArray(meshVAO);
         glDrawElements(GL_TRIANGLES, meshIndexCount, GL_UNSIGNED_INT, 0);
@@ -780,6 +797,18 @@ void checkCFLCondition(float dt, float cellSize, float maxVelocity = 100.0f)
     }
 }
 
+glm::vec3 getRayFromMouse(double mouseX, double mouseY, int screenWidth, int screenHeight, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix) {
+    float x = (2.0f * mouseX) / screenWidth - 1.0f;
+    float y = 1.0f - (2.0f * mouseY) / screenHeight;
+    glm::vec4 clipCoords(x, y, -1.0f, 1.0f);
+    glm::vec4 eyeCoords = glm::inverse(projectionMatrix) * clipCoords;
+    eyeCoords = glm::vec4(eyeCoords.x, eyeCoords.y, -1.0f, 0.0f);
+
+    glm::vec3 rayWorld = glm::vec3(glm::inverse(viewMatrix) * eyeCoords);
+    return glm::normalize(rayWorld);
+}
+
+
 int main()
 {
     // Initialize GLFW
@@ -837,11 +866,15 @@ int main()
 
     // Initialize Erosion Simulation
     HydraulicErosion simulation;
+
     if (!simulation.initialize())
     {
         std::cerr << "Failed to initialize erosion simulation" << std::endl;
         return -1;
     }
+
+    cpuSim = new HydraulicErosionCPU(GRID_SIZE, CELL_SIZE);
+
     std::cout << "=== Simulation Parameters ===" << std::endl;
     std::cout << "Grid Size: " << GRID_SIZE << "x" << GRID_SIZE << std::endl;
     std::cout << "Cell Size: " << CELL_SIZE << " meters" << std::endl;
@@ -849,6 +882,12 @@ int main()
     checkCFLCondition(DT, CELL_SIZE);
     std::cout << "=============================" << std::endl
               << std::endl;
+
+    
+    bool isPlacingRiver = false;
+    bool hasPlacedRiver = false;
+    bool wasUsingGPU = true;
+    glm::vec2 hoverGridPos = glm::vec2(0.0f);
 
     // Main Loop
     while (!glfwWindowShouldClose(window))
@@ -868,7 +907,18 @@ int main()
             ImGui::Begin("Hydraulic Erosion Simulation Controls");
 
             ImGui::Text("FPS: %.1f", io.Framerate);
+
             ImGui::Separator();
+            ImGui::PushStyleColor(ImGuiCol_Text, useGPU ? ImVec4(0.2f, 1.0f, 0.2f, 1.0f) : ImVec4(1.0f, 0.5f, 0.0f, 1.0f));
+            ImGui::Checkbox("Utiliser le GPU (Decocher = CPU)", &useGPU);
+            ImGui::PopStyleColor();
+            
+            ImGui::Text("Temps de calcul physique : %.2f ms", lastPhysicsTime);
+            if (!useGPU) {
+                ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Mode CPU actif : Chute de FPS normale.");
+            }
+            ImGui::Separator();
+
             if (ImGui::Checkbox("Show Sediment (Scientific Mode)", &showSediment))
             {
                 // Toggle sediment visualization
@@ -918,11 +968,41 @@ int main()
                 if (ImGui::Button("Regen Terrain") || changed)
                 {
                     simulation.initializeTerrain();
+                    
+                    if (!useGPU) {
+                        glBindTexture(GL_TEXTURE_2D, simulation.terrainTex[0]);
+                        glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, cpuSim->terrain[0].data());
+                        cpuSim->terrain[1] = cpuSim->terrain[0];
+                        
+                        std::fill(cpuSim->water[0].begin(), cpuSim->water[0].end(), 0.0f);
+                        std::fill(cpuSim->water[1].begin(), cpuSim->water[1].end(), 0.0f);
+                        std::fill(cpuSim->sediment[0].begin(), cpuSim->sediment[0].end(), 0.0f);
+                        std::fill(cpuSim->sediment[1].begin(), cpuSim->sediment[1].end(), 0.0f);
+                    }
                 }
             }
 
             if (ImGui::CollapsingHeader("River Parameters", ImGuiTreeNodeFlags_DefaultOpen)){
-                ImGui::Checkbox("Enable River Source", &ENABLE_RIVER);
+    
+                if (ImGui::Checkbox("Enable River Source", &ENABLE_RIVER)) {
+                    if (ENABLE_RIVER && !hasPlacedRiver) {
+                        isPlacingRiver = true;
+                    }
+                }
+                if (isPlacingRiver) {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.4f, 0.0f, 1.0f));
+                    if (ImGui::Button("Cancel Placement [ESC]")) {
+                        isPlacingRiver = false;
+                        if (!hasPlacedRiver) ENABLE_RIVER = false; 
+                    }
+                    ImGui::PopStyleColor();
+                    ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), "Click on terrain to place source.");
+                } else {
+                    if (ImGui::Button("Place / Move River Source (Mouse)")) {
+                        isPlacingRiver = true;
+                        ENABLE_RIVER = true;
+                    }
+                }
                 if (ENABLE_RIVER){
                     ImGui::SliderFloat2("Position (X,Y)", &RIVER_SOURCE_POS[0], 0.0f, (float)GRID_SIZE);
                     ImGui::SliderFloat("River Rate", &RIVER_RATE, 0.1f, 10.0f);
@@ -935,10 +1015,50 @@ int main()
             ImGui::End();
         }
 
-        // Simulation Steps
+        auto start = std::chrono::high_resolution_clock::now();
         for (int i = 0; i < ITERATIONS_PER_FRAME; ++i)
         {
-            simulation.simulationStep();
+            if (useGPU) {
+                simulation.simulationStep(isPlacingRiver);
+            } else {
+                cpuSim->dt = DT; 
+                cpuSim->gravity = GRAVITY;
+                cpuSim->pipeArea = PIPE_AREA;
+                cpuSim->pipeLength = PIPE_LENGTH;
+                cpuSim->Kc = KC; cpuSim->Ks = KS; cpuSim->Kd = KD; cpuSim->Ke = KE;
+                cpuSim->rainRate = RAIN_RATE;
+                cpuSim->riverRate = RIVER_RATE;
+                cpuSim->riverRadius = RIVER_RADIUS;
+                cpuSim->riverPos = RIVER_SOURCE_POS;
+                cpuSim->enableRiver = ENABLE_RIVER;
+                cpuSim->thermalErosionRate = THERMAL_EROSION_RATE;
+                cpuSim->talusAngle = TALUS_ANGLE;
+                
+                cpuSim->simulationStep(isPlacingRiver);
+            }
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        lastPhysicsTime = std::chrono::duration<double, std::milli>(end - start).count();
+
+
+        if (useGPU != wasUsingGPU) {
+            if (!useGPU) {
+                int buf = simulation.currentBuffer;
+
+                glBindTexture(GL_TEXTURE_2D, simulation.terrainTex[buf]);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, cpuSim->terrain[0].data());
+                cpuSim->terrain[1] = cpuSim->terrain[0];
+
+                glBindTexture(GL_TEXTURE_2D, simulation.waterTex[buf]);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, cpuSim->water[0].data());
+                cpuSim->water[1] = cpuSim->water[0];
+
+                glBindTexture(GL_TEXTURE_2D, simulation.sedimentTex[buf]);
+                glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_FLOAT, cpuSim->sediment[0].data());
+                cpuSim->sediment[1] = cpuSim->sediment[0];
+            }
+            
+            wasUsingGPU = useGPU;
         }
 
         // Camera Setup
@@ -957,9 +1077,35 @@ int main()
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 3000.0f);
         glm::mat4 viewProj = projection * view;
 
+        if (isPlacingRiver) {
+            if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+                isPlacingRiver = false;
+            }
+
+            if (!io.WantCaptureMouse) {
+                double mouseX, mouseY;
+                glfwGetCursorPos(window, &mouseX, &mouseY);
+                
+                glm::vec3 rayDir = getRayFromMouse(mouseX, mouseY, width, height, view, projection);
+
+                if (rayDir.y < 0.0f) {
+                    float t = (10.0f - cameraPos.y) / rayDir.y;
+                    glm::vec3 hitPoint = cameraPos + rayDir * t;
+                    hoverGridPos = glm::vec2(hitPoint.x / CELL_SIZE, hitPoint.z / CELL_SIZE);
+                    hoverGridPos.x = glm::clamp(hoverGridPos.x, 0.0f, (float)GRID_SIZE);
+                    hoverGridPos.y = glm::clamp(hoverGridPos.y, 0.0f, (float)GRID_SIZE);
+                }
+
+                if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+                    RIVER_SOURCE_POS = hoverGridPos;
+                    isPlacingRiver = false;
+                    hasPlacedRiver = true;
+                }
+            }
+        }
         // Render Scene
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        simulation.render(viewProj, (float)glfwGetTime(), cameraPos, showSediment);
+        simulation.render(viewProj, (float)glfwGetTime(), cameraPos, showSediment, isPlacingRiver, hoverGridPos);
 
         // ImGui Render
         ImGui::Render();
