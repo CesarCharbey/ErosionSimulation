@@ -21,9 +21,9 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/HydraulicsErosionCPU.cpp
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-    
-
 )
+
+
 
 # --- EXECUTABLE ---
 add_executable(hydraulic_erosion 
@@ -38,6 +38,7 @@ target_include_directories(hydraulic_erosion PRIVATE
     ${GLM_INCLUDE_DIRS}
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/stb_image
 )
 
 # --- LINKING ---
@@ -56,5 +57,7 @@ add_custom_target(UpdateShaders ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_CURRENT_SOURCE_DIR}/shaders
     ${CMAKE_CURRENT_BINARY_DIR}/shaders
-    COMMENT "Syncing shaders to build folder..."
+    ${CMAKE_CURRENT_SOURCE_DIR}/heightmaps
+    ${CMAKE_CURRENT_BINARY_DIR}/heightmaps
+    COMMENT "Syncing assets (shaders and heightmaps) to build folder..."
 )
