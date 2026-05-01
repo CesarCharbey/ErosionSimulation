@@ -52,12 +52,17 @@ target_link_libraries(hydraulic_erosion
 
 target_compile_options(hydraulic_erosion PRIVATE -Wall -Wextra)
 
-# --- SHADERS COPY ---
-add_custom_target(UpdateShaders ALL
+# --- ASSETS COPY ---
+add_custom_target(UpdateAssets ALL
+    # 1. Copier les shaders
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_CURRENT_SOURCE_DIR}/shaders
-    ${CMAKE_CURRENT_BINARY_DIR}/shaders
-    ${CMAKE_CURRENT_SOURCE_DIR}/heightmaps
-    ${CMAKE_CURRENT_BINARY_DIR}/heightmaps
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders
+        ${CMAKE_CURRENT_BINARY_DIR}/shaders
+    
+    # 2. Copier les heightmaps
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/heightmaps
+        ${CMAKE_CURRENT_BINARY_DIR}/heightmaps
+        
     COMMENT "Syncing assets (shaders and heightmaps) to build folder..."
 )

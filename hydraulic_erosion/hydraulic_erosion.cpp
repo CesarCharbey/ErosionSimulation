@@ -328,6 +328,7 @@ public:
 
         glUniform1f(glGetUniformLocation(waterIncrementShader, "dt"), DT);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "rainRate"), RAIN_RATE);
+        glUniform1f(glGetUniformLocation(waterIncrementShader, "u_Time"), (float)glfwGetTime());
         glUniform1i(glGetUniformLocation(waterIncrementShader, "enableRiver"), ENABLE_RIVER ? 1 : 0);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRate"), RIVER_RATE);
         glUniform1f(glGetUniformLocation(waterIncrementShader, "RiverRadius"), RIVER_RADIUS);
