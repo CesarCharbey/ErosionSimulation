@@ -26,18 +26,34 @@
 \maketitle
 
 \begin{abstract}
-    La génération de terrains virtuels réalistes nécessite souvent de simuler des phénomènes physiques complexes comme l'érosion. Ce document présente l'implémentation sur GPU (via Compute Shaders) du modèle d'érosion hydraulique rapide proposé par Mei et al. \cite{MDH07}. Afin de pallier le manque de détails géométriques inhérent à ces approches, tel que mis en évidence par Schott et al. \cite{SGG24}, nous proposons une extension intégrant une simulation d'érosion thermique. Nos résultats préliminaires démontrent qu'il est possible d'augmenter le réalisme des pentes abruptes et la distribution des sédiments tout en maintenant des performances temps réel compatibles avec des applications interactives.
+    La génération de terrains virtuels réalistes nécessite souvent de simuler des phénomènes physiques complexes comme l'érosion. Ce document présente l'implémentation sur GPU (via Compute Shaders) du modèle d'érosion hydraulique rapide proposé par Mei et al. \cite{MDH07}. Afin de pallier le manque de détails géométriques inhérent à ces approches, tel que mis en évidence par Schott et al. \cite{SGG24}, nous proposons une extension intégrant une simulation d'érosion thermique. Nos résultats démontrent qu'il est possible d'augmenter le réalisme des pentes abruptes et la distribution des sédiments tout en maintenant des performances temps réel compatibles avec des applications interactives.
 \end{abstract}
 
 \section{Introduction}
-Dans le domaine de l'informatique graphique, la création de mondes virtuels crédibles passe par une modélisation fidèle des paysages. Les mouvements d'eau, tels que la pluie et les rivières, sculptent ces terrains par des processus d'érosion, de transport de matière et de sédimentation. Si les méthodes basées sur la physique offrent le meilleur réalisme, elles souffrent historiquement de temps de calcul importants.
+Dans le domaine de l'informatique graphique, la création de mondes virtuels crédibles passe par une modélisation fidèle des paysages. Les mouvements d'eau, tels que la pluie et les rivières, sculptent ces terrains par des processus d'érosion, de transport de matière et de sédimentation.
 
-Ce projet vise à implémenter une solution d'érosion temps réel sur GPU basée sur les travaux de Mei et al. \cite{MDH07}. De plus, en réponse aux critiques récentes concernant le manque de précision et de détails de ces modèles classiques \cite{SGG24}, nous intégrons une passe d'érosion thermique pour simuler l'éboulement gravitationnel de la roche et enrichir la topologie finale.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{images/intro_landscape.jpg}
+    \caption{L'érosion hydraulique et thermique façonnent naturellement la géomorphologie des paysages, creusant des vallées et formant des éboulis.}
+    \label{fig:intro_landscape}
+\end{figure}
+
+Si les méthodes basées sur la physique offrent le meilleur réalisme pour reproduire ces structures organiques, elles souffrent historiquement de temps de calcul importants. Ce projet vise à implémenter une solution d'érosion temps réel sur GPU basée sur les travaux de Mei et al. \cite{MDH07}. De plus, en réponse aux critiques récentes concernant le manque de précision et de détails de ces modèles classiques \cite{SGG24}, nous intégrons une passe d'érosion thermique pour simuler l'éboulement gravitationnel de la roche et enrichir la topologie finale.
 
 % Etat de l'art
 \section{État de l'Art et Positionnement}
 
-La génération de terrains virtuels s'est historiquement appuyée sur des fonctions mathématiques de bruit (bruit de Perlin, fractales). Si ces méthodes garantissent une exécution instantanée, elles souffrent d'un manque inhérent de cohérence géomorphologique : les paysages générés sont dénués de réseaux de drainage ou de dépôts sédimentaires. Pour pallier ce déficit, la recherche s'est tournée vers la simulation physique des processus d'érosion.
+La génération de terrains virtuels s'est historiquement appuyée sur des fonctions mathématiques de bruit (bruit de Perlin, fractales). Si ces méthodes garantissent une exécution instantanée, elles souffrent d'un manque inhérent de cohérence géomorphologique : les paysages générés sont dénués de réseaux de drainage ou de dépôts sédimentaires.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{images/perlin_vs_erosion.png}
+    \caption{Comparaison entre une génération procédurale classique par bruit de Perlin (gauche) et un terrain soumis aux forces d'érosion (droite).}
+    \label{fig:perlin_vs_erosion}
+\end{figure}
+
+Pour pallier ce déficit, la recherche s'est tournée vers la simulation physique des processus d'érosion.
 
 \subsection{Érosion Hydraulique : Le Paradigme Eulérien}
 En 2007, Mei, Decaudin et Hu \cite{MDH07} ont provoqué un tournant paradigmatique en démontrant qu'il était possible de simuler l'érosion hydraulique à des fréquences d'affichage interactives sur GPU. Au lieu de résoudre les coûteuses équations tridimensionnelles de Navier-Stokes, leur modèle s'appuie sur une simplification bidimensionnelle : les équations de Saint-Venant (Shallow Water Equations).
@@ -72,8 +88,27 @@ La première approche repose sur une génération procédurale exécutée intég
 
 La seconde approche intègre la prise en charge et le chargement de cartes de hauteurs réelles (\textit{heightmaps}) importées sous forme d'images statiques. L'implémentation de cette fonctionnalité s'est révélée indispensable pour constituer notre référentiel d'évaluation. Elle permet en effet de mener des comparaisons rigoureuses et répétables entre nos différentes méthodes d'érosion (ainsi qu'avec l'implémentation CPU de référence) en garantissant une topologie d'entrée strictement identique.
 
+\subsection{Structure des Données et Tuyaux Virtuels}
+La simulation s'appuie sur une grille régulière bidimensionnelle. Afin de maintenir l'état du système hydrologique au cours du temps, cinq grandeurs physiques fondamentales sont stockées pour chaque cellule $(x,y)$ \cite{MDH07} : la hauteur du terrain $b$, la hauteur de la colonne d'eau $d$, la quantité de sédiments en suspension $s$, le vecteur de flux sortant $f = (f^L, f^R, f^T, f^B)$ et le vecteur vitesse $\vec{v} = (u,v)$.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/data_structure.png}
+    \caption{Représentation spatiale des variables d'état dans une cellule de la grille (d'après Mei et al. \cite{MDH07}).}
+    \label{fig:data_structure}
+\end{figure}
+
+Pour déplacer l'eau d'une cellule à l'autre sans résoudre des équations implicites instables, le système utilise le \textit{Virtual Pipe Model} (modèle des tuyaux virtuels) \cite{MDH07}. Chaque cellule est virtuellement connectée à ses quatre voisins de von Neumann par des tuyaux. Le flux d'eau traversant ces tuyaux est directement accéléré par la différence de pression hydrostatique (liée à la différence de hauteur totale $b+d$) entre les cellules adjacentes \cite{MDH07}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\linewidth]{images/pipe_model.png}
+    \caption{Le modèle des tuyaux virtuels gérant les échanges de flux (d'après Mei et al. \cite{MDH07}).}
+    \label{fig:pipe_model}
+\end{figure}
+
 \subsection{Stabilité Numérique et Condition CFL}
-Un défi majeur des solveurs de fluides explicites, tel que le modèle des tuyaux virtuels, réside dans leur instabilité numérique si le pas de temps ($\Delta t$) est inadapté à la vélocité du fluide. Pour éviter les explosions mathématiques (où des hauteurs d'eau négatives apparaîtraient), nous avons implémenté une vérification dynamique de la condition de Courant-Friedrichs-Lewy (CFL). Le pas de temps doit strictement respecter l'équation : $\Delta t \le \frac{\Delta x}{v_{max}}$. Notre système avertit l'utilisateur en temps réel via l'interface si l'accélération du fluide nécessite une réduction du pas de temps de simulation.
+Un défi majeur des solveurs de fluides explicites, tel que le modèle des tuyaux virtuels, réside dans leur instabilité numérique si le pas de temps ($\Delta t$) est inadapté à la vélocité du fluide. Pour éviter les explosions mathématiques (où des hauteurs d'eau négatives apparaîtraient), nous avons implémenté une vérification dynamique de la condition de Courant-Friedrichs-Lewy (CFL). Le pas de temps doit strictement respecter l'équation : $\Delta t \le \frac{\Delta x}{v_{max}}$ \cite{MDH07}. Notre système avertit l'utilisateur en temps réel via l'interface si l'accélération du fluide nécessite une réduction du pas de temps de simulation.
 
 \subsection{Implémentation du Pipeline et Gestion Mémoire}
 Bien que les fondements physiques de l'érosion hydraulique reposent sur le modèle Eulérien de Mei et al. \cite{MDH07}, le basculement vers une architecture Compute Shader moderne nécessite la mise en place de stratégies de synchronisation mémoire rigoureuses. Notre boucle de calcul est exécutée en parallèle sur la carte graphique (GPU) par des groupes de travail (\textit{Workgroups}) de dimensions $16 \times 16$ \textit{threads}.
@@ -84,7 +119,7 @@ Afin de prévenir les conditions de course (race conditions) intrinsèques aux c
 
 \begin{enumerate}
     \item \textbf{Ajout d'eau (\texttt{water\_\allowbreak increment.glsl}) :} Application des précipitations (pluie) et des sources fluviales éventuelles sur la grille.
-    \item \textbf{Calcul des flux (\texttt{flux\_\allowbreak compute.glsl}) :} Évaluation de la dynamique des fluides vers les quatre cellules voisines de von Neumann via le modèle des tuyaux virtuels (Pipe Model).
+    \item \textbf{Calcul des flux (\texttt{flux\_\allowbreak compute.glsl}) :} Évaluation de la dynamique des fluides vers les quatre cellules voisines de von Neumann via le modèle des tuyaux virtuels (Virtual Pipe Model).
     \item \textbf{Mise à jour des hauteurs et vélocités (\texttt{water\_\allowbreak update.glsl}) :} Ajustement du niveau d'eau et dérivation des champs de vecteurs vitesse (advection spatiale).
     \item \textbf{Érosion et Dépôt (\texttt{erosion\_\allowbreak deposition.glsl}) :} Altération de la topologie en comparant la charge sédimentaire à la capacité de transport théorique de l'eau, dépendante de l'inclinaison locale et de la vélocité.
     \item \textbf{Advection des sédiments (\texttt{sediment\_\allowbreak transport.\allowbreak glsl}) :} Déplacement de la masse minérale en suspension via une approche se\-mi-La\-gran\-gienne rétrograde.
@@ -111,9 +146,9 @@ Dans l'architecture de notre pipeline de Compute Shaders, l'érosion thermique c
 \section{Résultats et Évaluation}
 
 \subsection{Analyse des Performances et Benchmarks}
-Afin de quantifier avec précision les gains octroyés par notre architecture GPU moderne, nous avons développé en parallèle une implémentation rigoureusement équivalente s'exécutant intégralement sur le processeur central (CPU). Cette version CPU nous sert de référence (\textit{baseline}) absolue pour calculer le ratio d'accélération matériel (\textit{speedup}) et évaluer les performances globales de notre projet sur des cartes de hauteurs identiques.
+Afin de quantifier avec précision les gains octroyés par notre architecture GPU moderne, nous avons développé en parallèle une implémentation rigoureusement équivalente s'exécutant intégralement sur le processeur (CPU). Cette version CPU nous sert de référence pour calculer le ratio d'accélération matériel et évaluer les performances globales de notre projet sur des cartes de hauteurs identiques.
 
-Notre référentiel d'évaluation s'appuie également sur les données formellement documentées par Mei et al. en 2007 \cite{MDH07}. Lors de leurs expérimentations initiales (réalisées sur un processeur Pentium IV 2.40GHz équipé d'une carte graphique NVIDIA GeForce 8800 GTX), les auteurs mesuraient, pour une grille de résolution de $1024 \times 1024$, un temps de simulation de 6.65\,ms par passe physique et un temps de rendu visuel de 10.31\,ms. Ces valeurs portaient le temps de cycle complet à 16.95\,ms, correspondant à une fréquence d'environ 59 cycles par seconde (CPS).
+Notre référentiel d'évaluation s'appuie également sur les données documentées par Mei et al. en 2007 \cite{MDH07}. Lors de leurs expérimentations initiales (réalisées sur un processeur Pentium IV 2.40GHz équipé d'une carte graphique NVIDIA GeForce 8800 GTX), les auteurs mesuraient, pour une grille de résolution de $1024 \times 1024$, un temps de simulation de 6.65\,ms par passe physique et un temps de rendu visuel de 10.31\,ms. Ces valeurs portaient le temps de cycle complet à 16.95\,ms, correspondant à une fréquence d'environ 59 cycles par seconde (CPS).
 
 Le tableau \ref{tab:perf} présente les résultats de profilage comparatifs entre l'étude de 2007, notre implémentation CPU, et notre architecture GPU (Compute Shaders). Les temps d'exécution GPU ont été extraits via des requêtes asynchrones (\textit{Timestamp Queries} OpenGL) afin d'isoler strictement la charge de calcul des latences processeur. Nos mesures ont été effectuées sur une configuration matérielle milieu de gamme moderne (AMD Radeon RX 5700, processeur AMD Ryzen 5 2600, résolution d'affichage 1440p).
 
@@ -138,14 +173,19 @@ Le tableau \ref{tab:perf} présente les résultats de profilage comparatifs entr
 
 Les résultats obtenus confirment de manière spectaculaire la supériorité de l'architecture GPU pour la résolution de modèles Eulériens sur grilles. L'implémentation CPU séquentielle s'avère totalement inadaptée au temps réel, affichant un temps de cycle critique de près de 862\,ms (soit à peine 1,16 image par seconde). À l'inverse, l'implémentation sur Compute Shaders exécute le même cycle en 1,12\,ms, atteignant une fréquence interactive de l'ordre de 890 FPS. Cela représente un facteur d'accélération global impressionnant de plus de \textbf{767x} par rapport au CPU.
 
-Cette accélération est particulièrement notable sur la passe d'érosion thermique. Reposant sur des calculs purement locaux (voisinage de von Neumann à 4 cellules), cet algorithme est "naturellement parallélisable" (\textit{embarrassingly parallel}). Le passage d'une exécution séquentielle CPU (120,16\,ms) à une exécution massivement parallèle GPU via mémoire partagée (0,033\,ms) illustre un gain de performance supérieur à un facteur 3600. Le coût de notre amélioration thermique s'avère ainsi parfaitement négligeable sur GPU par rapport au gain géomorphologique structurel qu'elle apporte.
+Cette accélération est particulièrement notable sur la passe d'érosion thermique. Reposant sur des calculs purement locaux (voisinage de von Neumann à 4 cellules), cet algorithme est naturellement parallélisable. Le passage d'une exécution séquentielle CPU (120,16\,ms) à une exécution massivement parallèle GPU via mémoire partagée (0,033\,ms) illustre un gain de performance supérieur à un facteur 3600. Le coût de notre amélioration thermique s'avère ainsi parfaitement négligeable sur GPU par rapport au gain géomorphologique structurel qu'elle apporte.
 
 Enfin, il est crucial de noter que notre architecture logicielle permet de dissocier la fréquence de la simulation physique de la fréquence de rendu visuel (découplage). Étant donné la vaste réserve de puissance de calcul matérielle libérée (framerate effectif d'environ 900 FPS), il est possible d'exécuter plusieurs dizaines d'itérations physiques complètes entre chaque rafraîchissement d'écran (\texttt{ITERATIONS\_\allowbreak PER\_\allowbreak FRAME}), offrant la capacité d'accélérer artificiellement l'écoulement du temps géologique tout en conservant une fluidité interactive ininterrompue lors de la navigation.
+
 \subsection{Qualité Visuelle et Interactivité}
 L'ajout de l'érosion thermique permet de briser les arrêtes non naturelles créées par le creusement hydraulique, résultant en des formations de type éboulis beaucoup plus proches de la réalité. Par ailleurs, notre simulateur agit comme un véritable outil de conception en temps réel : grâce à une interface graphique dédiée, l'utilisateur peut ajuster à la volée les constantes géologiques ou introduire dynamiquement des sources fluviales pour observer l'adaptation organique du réseau de drainage.
 
 \section{Conclusion et Perspectives}
-L'intégration de l'érosion thermique au sein d'une boucle d'érosion hydraulique moderne via Compute Shaders permet de répondre efficacement au manque de détails reproché aux simulations temps réel. Les prochaines étapes consisteront à finaliser nos comparatifs de performances (\textit{benchmarks}) face à la version CPU, et à évaluer rigoureusement le comportement de notre algorithme sur des \textit{heightmaps} réelles.
+L'objectif initial de ce projet TER était de moderniser la simulation d'érosion hydraulique de Mei et al. \cite{MDH07} en tirant parti des architectures Compute Shaders contemporaines, tout en palliant son manque de précision géologique \cite{SGG24}. Ce double objectif a été atteint avec succès.
+
+L'intégration d'une passe d'érosion thermique s'est révélée redoutablement efficace pour briser les falaises artificielles laissées par l'eau, générant des éboulis réalistes. Sur le plan matériel, l'élaboration d'une architecture de \textit{ping-pong buffering} et la gestion fine des barrières de mémoire ont permis d'atteindre des performances interactives colossales (environ 890 FPS pour une grille de $1024 \times 1024$). Le développement et l'analyse croisée avec une implémentation CPU de référence, ainsi que l'importation de \textit{heightmaps} réelles, nous ont permis de certifier scientifiquement un facteur d'accélération matériel dépassant les 760x.
+
+Fort de ce socle algorithmique robuste et hautement optimisé, plusieurs perspectives de recherche s'ouvrent pour enrichir le simulateur. La limitation inhérente aux cartes de hauteurs (incapacité à modéliser des grottes ou des surplombs) pourrait être levée en adaptant notre boucle hydrologique à des strates volumétriques superposées (\textit{Multi-Layered Heightmaps}) \cite{Nilles24}. De plus, le couplage de cette érosion géologique avec un modèle de végétation dynamique (où l'humidité résiduelle fait pousser une flore dont les racines stabilisent mécaniquement le terrain face à l'érosion future) constituerait une avancée majeure vers la simulation d'écosystèmes complets en temps réel.
 
 % --- BIBLIOGRAPHIE ---
 \begin{thebibliography}{9}
