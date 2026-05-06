@@ -25,6 +25,8 @@ const char *HEIGHTMAP_FILES[] = {
     "heightmaps/heightmap1.png",
     "heightmaps/grand_canyon_heightmap.png",
     "heightmaps/nepal_mountain_range.png",
+    "heightmaps/islande.png",
+    "heightmaps/reunion.png",
 };
 
 std::string loadShaderSourceFromFile(const char *filepath)
@@ -93,7 +95,10 @@ private:
     GLuint erosionShader;
     GLuint sedimentTransportShader;
     GLuint evaporationShader;
-    GLuint thermalErosionShader;
+    GLuint thermalFluxTex;     // (vec4: L, R, T, B)
+    GLuint thermalFluxDiagTex; // (vec4: TL, TR, BL, BR)
+    GLuint thermalFluxShader;
+    GLuint thermalApplyShader;
 
     // Rendering
     GLuint renderProgram;
@@ -176,6 +181,8 @@ public:
         // Single-buffered textures
         fluxTex = createTexture(GL_RGBA32F);
         velocityTex = createTexture(GL_RG32F);
+        thermalFluxTex = createTexture(GL_RGBA32F);
+        thermalFluxDiagTex = createTexture(GL_RGBA32F);
     }
 
     void initializeTerrain()
@@ -408,18 +415,32 @@ public:
         glDispatchCompute(workGroupsX, workGroupsY, 1);
         glEndQuery(GL_TIME_ELAPSED); // End physics query
 
-        // Pass 7: Thermal Erosion
-        // Reads Terrain[WRITE] (from erosion pass), Writes to Terrain[READ] (final)
-        glBeginQuery(GL_TIME_ELAPSED, timeQueries[1]); // Start thermal erosion query
-        glUseProgram(thermalErosionShader);
+        // Pass 7.1: Thermal Erosion (Flux Calculation)
+        glBeginQuery(GL_TIME_ELAPSED, timeQueries[1]);
+        glUseProgram(thermalFluxShader);
         glBindImageTexture(0, terrainTex[WRITE], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
-        glBindImageTexture(1, terrainTex[READ], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
-        glUniform1f(glGetUniformLocation(thermalErosionShader, "talusAngle"), TALUS_ANGLE);
-        glUniform1f(glGetUniformLocation(thermalErosionShader, "erosionRate"), THERMAL_EROSION_RATE);
-        glUniform1f(glGetUniformLocation(thermalErosionShader, "dt"), DT);
-        glUniform1f(glGetUniformLocation(thermalErosionShader, "cellSize"), CELL_SIZE);
+        glBindImageTexture(1, thermalFluxTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, thermalFluxDiagTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(3, waterTex[READ], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
+
+        glUniform1f(glGetUniformLocation(thermalFluxShader, "talusAngle"), TALUS_ANGLE);
+        glUniform1f(glGetUniformLocation(thermalFluxShader, "erosionRate"), THERMAL_EROSION_RATE);
+        glUniform1f(glGetUniformLocation(thermalFluxShader, "dt"), DT);
+        glUniform1f(glGetUniformLocation(thermalFluxShader, "cellSize"), CELL_SIZE);
         glDispatchCompute(workGroupsX, workGroupsY, 1);
-        glEndQuery(GL_TIME_ELAPSED); // End thermal erosion query
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        // Pass 7.2: Thermal Erosion (Apply Flux)
+        glUseProgram(thermalApplyShader);
+        glBindImageTexture(0, terrainTex[WRITE], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
+        glBindImageTexture(1, thermalFluxTex, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(2, thermalFluxDiagTex, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(3, terrainTex[READ], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+
+        glUniform1f(glGetUniformLocation(thermalApplyShader, "cellSize"), CELL_SIZE);
+        glDispatchCompute(workGroupsX, workGroupsY, 1);
+        glEndQuery(GL_TIME_ELAPSED);
+
         // Final Synchronization
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
@@ -492,7 +513,10 @@ public:
         glDeleteProgram(erosionShader);
         glDeleteProgram(sedimentTransportShader);
         glDeleteProgram(evaporationShader);
-        glDeleteProgram(thermalErosionShader);
+        glDeleteTextures(1, &thermalFluxTex);
+        glDeleteTextures(1, &thermalFluxDiagTex);
+        glDeleteProgram(thermalFluxShader);
+        glDeleteProgram(thermalApplyShader);
         glDeleteProgram(renderProgram);
         glDeleteVertexArrays(1, &meshVAO);
         glDeleteBuffers(1, &meshVBO);
@@ -748,13 +772,17 @@ bool HydraulicErosion::loadShaders()
         return false;
 
     // Thermal Erosion
-    std::cout << "Loading thermal_erosion.glsl..." << std::endl;
-    source = loadShaderSourceFromFile("shaders/thermal_erosion.glsl");
+    std::cout << "Loading thermal_flux.glsl..." << std::endl;
+    source = loadShaderSourceFromFile("shaders/thermal_flux.glsl");
     if (source.empty())
         return false;
-    thermalErosionShader = createComputeShader(source.c_str());
-    if (!thermalErosionShader)
+    thermalFluxShader = createComputeShader(source.c_str());
+
+    std::cout << "Loading thermal_apply.glsl..." << std::endl;
+    source = loadShaderSourceFromFile("shaders/thermal_apply.glsl");
+    if (source.empty())
         return false;
+    thermalApplyShader = createComputeShader(source.c_str());
 
     std::cout << "All external shaders loaded successfully!" << std::endl;
     return true;
