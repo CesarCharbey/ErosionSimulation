@@ -21,10 +21,10 @@
 int TERRAIN_MODE = 1;
 int CURRENT_HEIGHTMAP = 0;
 const char *HEIGHTMAP_FILES[] = {
+    "heightmaps/alpes_francaise.png",
     "heightmaps/heightmap1.png",
-    "heightmaps/AlpeEcraseTaMere.png",
-    "heightmaps/AlpeUnPeuMoinsEcrasseTaMere.png",
-
+    "heightmaps/grand_canyon_heightmap.png",
+    "heightmaps/nepal_mountain_range.png",
 };
 
 std::string loadShaderSourceFromFile(const char *filepath)
@@ -55,12 +55,12 @@ float RIVER_RADIUS = 3.0f;
 glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); // Default position of the river source
 
 // Erosion
-float KC = 0.8f;  // Sediment capacity
+float KC = 0.4f;  // Sediment capacity
 float KS = 0.05f; // Dissolving constant
 float KD = 0.1f;  // Deposition constant
-float KE = 0.01f; // Evaporation constant (1%/s)
+float KE = 0.05f; // Evaporation constant (1%/s)
 float RAIN_RATE = 0.008f;
-float THERMAL_EROSION_RATE = 0.5f;
+float THERMAL_EROSION_RATE = 0.25f;
 float TALUS_ANGLE = glm::radians(60.0f);
 
 // Terrain Generation Parameters

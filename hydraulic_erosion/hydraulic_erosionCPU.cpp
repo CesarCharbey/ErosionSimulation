@@ -79,23 +79,12 @@ public:
         auto startPhysics = std::chrono::high_resolution_clock::now();
 
         // --- PASSE 1 : WATER INCREMENT (Pluie + Rivière) ---
-        static std::mt19937 gen(std::random_device{}());
-        static std::uniform_real_distribution<float> dis(0.0f, 1.0f);
-
         for (int y = 0; y < gridSize; y++)
         {
             for (int x = 0; x < gridSize; x++)
             {
                 int i = IDX(x, y);
-                float d = water[READ][i];
-                float addedWater = 0.0f;
-
-                if (dis(gen) < 0.05f)
-                {
-                    addedWater = rainRate * dt * 20.0f;
-                }
-
-                float d_new = d + addedWater;
+                float d_new = water[READ][i] + (dt * rainRate);
 
                 if (enableRiver && !isPlacingRiver)
                 {

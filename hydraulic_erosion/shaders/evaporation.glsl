@@ -14,16 +14,22 @@ uniform float Ke; // Evaporation constant
 
 void main() {
     ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
-    
-    if (coords.x >= imageSize(waterHeight_in).x || coords.y >= imageSize(waterHeight_in).y) {
+    ivec2 gridDim = imageSize(waterHeight_in);
+
+    if (coords.x >= gridDim.x || coords.y >= gridDim.y) {
         return;
     }
-    
+
     float d = imageLoad(waterHeight_in, coords).r;
-    
+
     // Equation 15: d_new = d * (1 - Ke * dt)
     float d_new = d * (1.0 - Ke * dt);
     d_new = max(d_new, 0.0);
-    
+
+    // At the border of the map, we can set water to zero to prevent artifacts from sampling outside the grid
+    if (coords.x <= 2 || coords.x >= gridDim.x - 3 || coords.y <= 2 || coords.y >= gridDim.y - 3) {
+        d_new = 0.0;
+    }
+
     imageStore(waterHeight_out, coords, vec4(d_new, 0.0, 0.0, 0.0));
 }
