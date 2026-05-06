@@ -45,7 +45,7 @@ const int GRID_SIZE = 1024;
 const float CELL_SIZE = 1.0f;
 float DT = 0.0015f;
 float GRAVITY = 9.81f;
-float PIPE_AREA = 1.5f;
+float PIPE_AREA = 0.5f;
 float PIPE_LENGTH = CELL_SIZE;
 
 // River parameters
@@ -55,13 +55,14 @@ float RIVER_RADIUS = 3.0f;
 glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); // Default position of the river source
 
 // Erosion
-float KC = 0.4f;  // Sediment capacity
-float KS = 0.03f; // Dissolving constant
-float KD = 0.1f;  // Deposition constant
-float KE = 0.04f; // Evaporation constant (1%/s)
-float RAIN_RATE = 0.006f;
-float THERMAL_EROSION_RATE = 0.25f;
-float TALUS_ANGLE = glm::radians(60.0f);
+float KC = 0.05f;  // Sediment capacity
+float KS = 0.005f; // Dissolving constant
+float KD = 0.03f;  // Deposition constant
+float KE = 0.015f; // Evaporation constant (1%/s)
+float KE_STAGNANT = 3.0f;
+float RAIN_RATE = 0.05f;
+float THERMAL_EROSION_RATE = 0.05f;
+float TALUS_ANGLE = glm::radians(45.0f);
 
 // Terrain Generation Parameters
 float TERRAIN_SEED = 0.0f;
@@ -391,6 +392,7 @@ public:
         glBindImageTexture(2, velocityTex, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RG32F);
         glUniform1f(glGetUniformLocation(sedimentTransportShader, "dt"), DT);
         glUniform1i(glGetUniformLocation(sedimentTransportShader, "gridSize"), GRID_SIZE);
+        glUniform1f(glGetUniformLocation(sedimentTransportShader, "cellSize"), CELL_SIZE);
         glDispatchCompute(workGroupsX, workGroupsY, 1);
 
         // Pass 6: Evaporation
@@ -398,8 +400,11 @@ public:
         glUseProgram(evaporationShader);
         glBindImageTexture(0, waterTex[WRITE], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
         glBindImageTexture(1, waterTex[READ], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+        glBindImageTexture(2, velocityTex, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RG32F);
+
         glUniform1f(glGetUniformLocation(evaporationShader, "dt"), DT);
         glUniform1f(glGetUniformLocation(evaporationShader, "Ke"), KE);
+        glUniform1f(glGetUniformLocation(evaporationShader, "KeStagnant"), KE_STAGNANT);
         glDispatchCompute(workGroupsX, workGroupsY, 1);
         glEndQuery(GL_TIME_ELAPSED); // End physics query
 
@@ -893,7 +898,7 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(0); // Enable V-Sync (0 = off, 1 = on)
+    glfwSwapInterval(1); // Enable V-Sync (0 = off, 1 = on)
 
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);

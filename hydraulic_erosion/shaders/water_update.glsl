@@ -84,7 +84,7 @@ void main() {
 
         // Clamp velocity to avoid numerical explosions
         // Maximum velocity to prevent CFL violations and numerical instability
-        const float MAX_VELOCITY = 100.0;
+        const float MAX_VELOCITY = 20.0;
         float len = length(velocity);
         if (len > MAX_VELOCITY) {
             velocity = (velocity / len) * MAX_VELOCITY;

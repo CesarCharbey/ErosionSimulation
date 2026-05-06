@@ -19,51 +19,53 @@ uniform float u_RiverRadius;
 uniform int u_ShowRiverPreview;
 
 // Simple Noise for water
-float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
 float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
     f = f * f * (3.0 - 2.0 * f);
     return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
-               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+        mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 
 void main() {
     // Calculate normal using finite differences (dynamic!)
     vec2 texelSize = 1.0 / vec2(gridSize);
-    
+
     // Sample neighboring heights
     float hL = texture(terrainTex, TexCoord + vec2(-texelSize.x, 0.0)).r;
     float hR = texture(terrainTex, TexCoord + vec2(texelSize.x, 0.0)).r;
     float hD = texture(terrainTex, TexCoord + vec2(0.0, -texelSize.y)).r;
     float hU = texture(terrainTex, TexCoord + vec2(0.0, texelSize.y)).r;
-    
+
     // Calculate gradient
     vec3 terrainNormal;
     terrainNormal.x = (hL - hR) / (2.0 * cellSize);
     terrainNormal.z = (hD - hU) / (2.0 * cellSize);
     terrainNormal.y = 1.0;
     terrainNormal = normalize(terrainNormal);
-    
+
     // Lighting direction (sun from above-right)
     vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
-    
+
     // Diffuse lighting
     float diff = max(dot(terrainNormal, lightDir), 0.0);
-    
+
     // Mode 1 : Scientific mode
     if (u_ShowSediment == 1) {
         // Base Terrain : Simple Clay
         vec3 color = vec3(0.7, 0.65, 0.5) * (0.3 + 0.7 * diff);
 
-        float waterMix = smoothstep(0.0, 0.02, WaterDepth);
+        float waterMix = smoothstep(0.0001, 0.02, WaterDepth);
         if (waterMix > 0.0) {
             vec3 waterCol = vec3(0.0, 0.0, 1.0);
             vec3 sedimentCol = vec3(0.0, 1.0, 0.0);
 
             //Mix based on sediment amount
             float sRatio = clamp(SedimentAmount * 10.0, 0.0, 1.0);
-            vec3 finalFluid = mix (waterCol, sedimentCol, sRatio);
+            vec3 finalFluid = mix(waterCol, sedimentCol, sRatio);
             color = mix(color, finalFluid, waterMix * 0.8);
         }
         FragColor = vec4(color, 1.0);
@@ -105,12 +107,12 @@ void main() {
         // Water normal (animated)
         vec2 rippleCoords = WorldPos.xz * 0.5 + u_Time * 0.5;
         float ripple = noise(rippleCoords);
-        vec3 waterNormal = normalize(vec3(0.0, 1.0, 0.0) + vec3(ripple * 0.05 ,0.0, ripple * 0.05));
+        vec3 waterNormal = normalize(vec3(0.0, 1.0, 0.0) + vec3(ripple * 0.05, 0.0, ripple * 0.05));
 
         // Fresnel schlick's approximation
         vec3 viewDir = normalize(u_ViewPos - WorldPos);
         float NdotV = max(dot(waterNormal, viewDir), 0.0);
-        float fresnel = 0.02 + (1.0 -0.02) * pow(1.0 - NdotV, 5.0);
+        float fresnel = 0.02 + (1.0 - 0.02) * pow(1.0 - NdotV, 5.0);
 
         // Water color
         vec3 deepColor = vec3(0.0, 0.05, 0.2);

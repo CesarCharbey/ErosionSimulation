@@ -8,9 +8,11 @@ layout(local_size_x = 16, local_size_y = 16) in;
 
 layout(r32f, binding = 0) uniform readonly image2D waterHeight_in;
 layout(r32f, binding = 1) uniform writeonly image2D waterHeight_out;
+layout(rg32f, binding = 2) uniform readonly image2D velocityField;
 
 uniform float dt;
 uniform float Ke; // Evaporation constant
+uniform float KeStagnant; // Evaporation constant for stagnant water (no velocity)
 
 void main() {
     ivec2 coords = ivec2(gl_GlobalInvocationID.xy);
@@ -21,9 +23,14 @@ void main() {
     }
 
     float d = imageLoad(waterHeight_in, coords).r;
+    vec2 v = imageLoad(velocityField, coords).rg;
+
+    float speed = length(v);
+    float flowThreshold = 0.1;
+    float stagnantFactor = 1.0 + KeStagnant * (1.0 - smoothstep(0.0, flowThreshold, speed));
 
     // Equation 15: d_new = d * (1 - Ke * dt)
-    float d_new = d * (1.0 - Ke * dt);
+    float d_new = d * (1.0 - Ke * stagnantFactor * dt);
     d_new = max(d_new, 0.0);
 
     // At the border of the map, we can set water to zero to prevent artifacts from sampling outside the grid
