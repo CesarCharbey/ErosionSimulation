@@ -56,10 +56,10 @@ glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); // Default posit
 
 // Erosion
 float KC = 0.4f;  // Sediment capacity
-float KS = 0.05f; // Dissolving constant
+float KS = 0.03f; // Dissolving constant
 float KD = 0.1f;  // Deposition constant
-float KE = 0.05f; // Evaporation constant (1%/s)
-float RAIN_RATE = 0.008f;
+float KE = 0.04f; // Evaporation constant (1%/s)
+float RAIN_RATE = 0.006f;
 float THERMAL_EROSION_RATE = 0.25f;
 float TALUS_ANGLE = glm::radians(60.0f);
 

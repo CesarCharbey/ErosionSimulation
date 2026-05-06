@@ -82,8 +82,6 @@ void main() {
         velocity.x = delta_WX / (cellSize * d_avg);
         velocity.y = delta_WY / (cellSize * d_avg);
 
-        velocity *= 0.80; // This help simulate friction
-
         // Clamp velocity to avoid numerical explosions
         // Maximum velocity to prevent CFL violations and numerical instability
         const float MAX_VELOCITY = 100.0;
