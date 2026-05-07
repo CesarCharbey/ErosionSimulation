@@ -79,7 +79,6 @@ Si le modèle hydraulique creuse des lits de rivières convaincants, il engendre
 Pour répondre à cette problématique, Jákó et Szirmay-Kalos \cite{Jako11} ont mis en évidence la nécessité de coupler l'hydraulique à un modèle d'\textbf{érosion thermique}. Ce processus physique complémentaire simule l'effondrement gravitationnel, le détachement de la roche et la formation d'éboulis dès lors que l'inclinaison locale dépasse l'angle de repos spécifique au matériau.
 
 % Modèle de base
-% Modèle de base
 \section{Méthodologie et Ingénierie}
 
 \subsection{Architecture Logicielle et Outils}
@@ -119,6 +118,21 @@ $$ f_{t+\Delta t} = \max \left(0, f_t + \Delta t \cdot A \cdot \frac{g \cdot \De
 \end{figure}
 
 Pour éviter l'apparition aberrante de hauteurs d'eau négatives (si la somme des flux sortants excède le volume d'eau réel de la cellule), un facteur de mise à l'échelle scalaire $K$ est calculé localement et appliqué uniformément aux quatre composantes du flux, garantissant la conservation stricte de la masse hydrique.
+
+\subsection{Améliorations du Modèle de Mei : Apports de Jákó et Szirmay-Kalos}
+Bien que le modèle de Mei et al. \cite{MDH07} pose des fondations algorithmiques extrêmement solides pour la simulation Eulérienne en temps réel, son exécution sur des échelles de temps géologiques révèle certaines limites physiques inhérentes : creusement infini des fonds sous-marins, arrachement sédimentaire isotrope, et légères instabilités de la surface hydrique.
+
+Afin de pallier ces défauts et d'élever le réalisme de notre moteur, nous avons outrepassé l'implémentation classique en y intégrant trois corrections physiques majeures issues des travaux postérieurs de Jákó et Szirmay-Kalos \cite{Jako11}. Ces ajouts, intégrés directement au cœur de notre passe d'érosion et de sédimentation (Passe 4), modifient fondamentalement le comportement du fluide :
+
+\begin{itemize}
+    \item \textbf{Inhibition de l'érosion en eaux profondes ($l_{max}$) :} Dans le modèle de 2007, un fleuve se jetant dans un lac continue d'éroder le fond marin de manière perpétuelle. Nous avons implémenté un facteur d'atténuation dynamique contraint par la profondeur locale. Lorsque la hauteur de la colonne d'eau dépasse un seuil critique, la capacité de transport s'annule. Ce mécanisme protège naturellement les fonds sous-marins et force le dépôt des sédiments aux embouchures, générant des deltas fluviaux et des hauts-fonds organiques \cite{Jako11}.
+    
+    \item \textbf{Collision Hydrologique 3D :} La capacité d'arrachement de la roche ne dépend plus uniquement d'une simple pente bidimensionnelle. L'algorithme calcule désormais la force d'impact via le produit scalaire (\textit{dot product}) entre le vecteur de vélocité tridimensionnel du fluide et la normale de la surface heurtée. Une masse d'eau percutant un obstacle géométrique de plein fouet creusera ainsi de manière exponentiellement plus agressive qu'un fluide glissant parallèlement à une pente douce.
+    
+    \item \textbf{Couplage Volumétrique Eau-Sédiment :} L'approche originelle omettait le volume physique occupé par la terre en suspension dans l'eau. Nous avons résolu cette incohérence par un couplage strict des états : lorsqu'un volume de roche est arraché, il s'ajoute instantanément à la colonne d'eau locale. Inversement, la déposition sédimentaire abaisse le niveau d'eau \cite{Jako11}. Cette correction de la conservation des masses neutralise les comportements indésirables, garantissant la stabilité absolue de la surface des lacs sur de très longues sessions de simulation.
+\end{itemize}
+
+L'intégration de ces contraintes transforme le solveur mathématique de base en une véritable simulation géomorphologique, et ce, avec un coût computationnel supplémentaire rendu totalement invisible par l'architecture des Compute Shaders.
 
 \subsection{Stabilité Numérique et Condition CFL}
 Un défi inhérent aux solveurs de fluides explicites réside dans leur instabilité si le pas de temps d'intégration ($\Delta t$) est inadapté à la vélocité maximale du fluide. Si l'eau se déplace sur une distance supérieure à la taille d'une cellule en une seule itération, le modèle mathématique s'effondre. Pour éviter ces explosions numériques, nous avons implémenté une vérification stricte de la condition de Courant-Friedrichs-Lewy (CFL) :
@@ -216,11 +230,11 @@ L'analyse de ces métriques illustre un saut technologique majeur. L'implémenta
 Le basculement sur GPU via Compute Shaders pulvérise ces limitations, ramenant la boucle complète à seulement 1,037\,ms. Le facteur d'accélération global entre notre implémentation CPU et GPU atteint ainsi le ratio colossal de \textbf{1661x}. L'optimisation est particulièrement visible sur l'érosion thermique : malgré la complexité du modèle de Jákó (calcul de flux directionnels et dureté locale), le GPU exécute cette tâche en 0,223\,ms (soit une accélération de 3680x face au CPU). Ces résultats prouvent que l'architecture moderne permet d'exécuter des modèles physiques autrefois coûteux (\cite{MDH07, Jako11}) en une fraction de milliseconde.
 
 \subsection{Interactivité et Découplage Temporel}
-Cette colossale réserve de puissance (framerate théorique frôlant les 960 FPS) nous a permis d'implémenter un découplage temporel profond entre le moteur physique et le moteur de rendu. L'utilisateur peut, via l'interface ImGui, ordonner l'exécution de dizaines d'itérations physiques (\texttt{ITERATIONS\_PER\_FRAME}) par image affichée à l'écran.
+Cette colossale réserve de puissance (framerate théorique frôlant les 960~FPS) nous a permis d'implémenter un découplage temporel profond entre le moteur physique et le moteur de rendu. L'utilisateur peut, via l'interface ImGui, ordonner l'exécution de multiples itérations physiques (\texttt{ITERATIONS\_PER\_FRAME}, paramétrable jusqu'à 10) pour chaque image affichée à l'écran.
 
-Afin de donner une échelle de grandeur à cette performance, nous avons introduit un facteur de conversion vers le temps géologique. En considérant qu'une unité de temps physique ($dt = 1$) équivaut à 10\,000 ans d'érosion naturelle, notre simulateur permet de compresser les millénaires de manière fulgurante. À titre d'exemple, avec un pas de temps $\Delta t = 0,0015$ et 500 itérations par trame, une seule seconde de simulation réelle permet de calculer environ \textbf{11\,250 années géologiques}.
+Afin de donner une échelle de grandeur à cette performance, nous avons introduit un facteur de conversion vers le temps géologique. En considérant qu'une seconde de temps physique simulé équivaut à 10\,000 ans d'érosion naturelle, notre simulateur permet de compresser les millénaires de manière fulgurante. Avec un pas de temps $\Delta t = 0,0015$, chaque itération fait avancer l'érosion de 15~ans. À son paramétrage maximal de 10~itérations par trame, l'application calcule 150~années géologiques par image. Ainsi, une seule seconde de simulation en temps réel, standardisée à 60~FPS, permet d'écouler \textbf{9\,000 années géologiques} (un chiffre qui s'envole à plus de 144\,000 années par seconde si le framerate est débridé).
 
-Ce mécanisme permet d'observer en quelques minutes des processus qui nécessiteraient normalement des millions d'années, comme le creusement de canyons profonds ou l'aplanissement de massifs montagneux (pénéplanation). L'interface offre de surcroît la possibilité d'altérer les constantes physiques ou de déplacer des sources de rivières à la volée, transformant le programme en un puissant laboratoire géomorphologique interactif où l'utilisateur navigue fluidement à travers les époques.
+Ce mécanisme permet d'observer en quelques minutes des processus qui nécessiteraient normalement des millions d'années, comme le creusement de canyons profonds ou l'aplanissement de massifs montagneux. L'interface offre de surcroît la possibilité d'altérer les constantes physiques ou de déplacer des sources de rivières à la volée, transformant le programme en un puissant laboratoire géomorphologique interactif où l'utilisateur navigue fluidement à travers les époques.
 
 \section{Conclusion et Perspectives}
 L'objectif central de ce projet TER consistait à concevoir un moteur d'érosion procédurale interactif, s'appuyant sur le modèle historique de Mei et al. \cite{MDH07}, tout en comblant son manque de réalisme topologique \cite{SGG24} via l'intégration des technologies graphiques contemporaines. Ce cahier des charges a été rempli avec succès.
