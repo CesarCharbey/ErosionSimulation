@@ -54,6 +54,9 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Stabilité Numérique et Condition CFL}{3}{subsection.3.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Implémentation du Pipeline et Gestion Mémoire}{3}{subsection.3.5}\protected@file@percent }
 \citation{MDH07}
+\citation{Jako11}
+\citation{Jako11}
+\citation{Jako11}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Architecture du double tamponnage : les passes physiques écrivent dans le tampon temporaire (WRITE), tandis que les passes de post-traitement rapatrient l'état final dans le tampon principal (READ), sous la protection des barrières mémoire.}}{4}{figure.5}\protected@file@percent }
 \newlabel{fig:ping_pong}{{5}{4}{Architecture du double tamponnage : les passes physiques écrivent dans le tampon temporaire (WRITE), tandis que les passes de post-traitement rapatrient l'état final dans le tampon principal (READ), sous la protection des barrières mémoire}{figure.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Décomposition du Pipeline d'Érosion sur GPU}{4}{subsection.3.6}\protected@file@percent }
@@ -63,22 +66,33 @@
 \@writefile{toc}{\contentsline {paragraph}{4. Érosion et Sédimentation (\texttt  {erosion\_\allowbreak  deposition.\allowbreak  glsl}) :}{4}{section*.5}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{5. Transport Sédimentaire (\texttt  {sediment\_\allowbreak  transport.\allowbreak  glsl}) :}{4}{section*.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{6. Évaporation (\texttt  {evaporation.glsl}) :}{4}{section*.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Défis Numériques et Conservation de la Masse}{4}{subsection.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{7. Calcul des Flux Thermiques (\texttt  {thermal\_\allowbreak  flux.glsl}) :}{4}{section*.8}\protected@file@percent }
+\citation{Jako11}
 \citation{MDH07}
+\citation{Jako11}
+\citation{Jako11}
+\citation{Jako11}
+\@writefile{toc}{\contentsline {paragraph}{8. Application Thermique (\texttt  {thermal\_\allowbreak  apply.glsl}) :}{5}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Défis Numériques et Conservation de la Masse}{5}{subsection.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.8}Érosion Thermique Avancée : Dureté Locale et Voisinage de Moore}{5}{subsection.3.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.9}Analyse des Performances et Benchmarks}{5}{subsection.3.9}\protected@file@percent }
 \citation{MDH07}
+\citation{Jako11}
 \citation{MDH07}
+\citation{Jako11}
+\citation{MDH07}
+\citation{Jako11}
 \citation{MDH07}
 \citation{SGG24}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Résultats et Évaluation}{5}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Analyse des Performances et Benchmarks}{5}{subsection.4.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données de Mei et al. \cite  {MDH07} servent de repère. Un temps de cycle de 1.123\,ms correspond à une fréquence théorique d'environ 890 images par seconde (FPS).}}{5}{table.1}\protected@file@percent }
-\newlabel{tab:perf}{{1}{5}{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données de Mei et al. \cite {MDH07} servent de repère. Un temps de cycle de 1.123\,ms correspond à une fréquence théorique d'environ 890 images par seconde (FPS)}{table.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Interactivité et Découplage Temporel}{5}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion et Perspectives}{5}{section.5}\protected@file@percent }
+\citation{Jako11}
 \citation{Nilles24}
 \bibcite{MDH07}{1}
 \bibcite{Jako11}{2}
 \bibcite{SGG24}{3}
 \bibcite{Hartley24}{4}
 \bibcite{Nilles24}{5}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite  {MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS).}}{6}{table.1}\protected@file@percent }
+\newlabel{tab:perf}{{1}{6}{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite {MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS)}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.10}Interactivité et Découplage Temporel}{6}{subsection.3.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Conclusion et Perspectives}{6}{section.4}\protected@file@percent }
 \gdef \@abspage@last{6}

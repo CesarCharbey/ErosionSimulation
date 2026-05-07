@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2026.3.24)  6 MAY 2026 11:51
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2026.3.24)  7 MAY 2026 09:29
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -492,35 +492,43 @@ Package pdftex.def Info: images/ping_pong.png  used on input line 137.
 (pdftex.def)             Requested size: 225.96579pt x 127.10295pt.
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 146.
- [4
+
+Underfull \hbox (badness 10000) in paragraph at lines 164--165
+ []\T1/cmr/bx/n/10 (+20) 7. Cal-cul des Flux Ther-miques (\T1/cmtt/m/n/10 thermal_
+ []
+
+
+Underfull \hbox (badness 1776) in paragraph at lines 164--165
+\T1/cmtt/m/n/10 flux.glsl\T1/cmr/bx/n/10 (+20) ) :[] \T1/cmr/m/n/10 (+20) DÈ-but du cycle d'Èro-sion ther-mique.
+ []
+
+[4
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.168 L
-       e second d√©fi est li√© aux conditions aux limites du domaine de simu... <./images/ping_pong.png>] [5
+l.165 
+       <./images/ping_pong.png>] [5] [6
 pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.216 
-      ] [6
-
-] (./TER_CR.aux)
+l.262 \end{document}
+                    ] (./TER_CR.aux)
 Package rerunfilecheck Info: File `TER_CR.out' has not changed.
-(rerunfilecheck)             Checksum: 90FCDAFC2DB31C494AE187925F6CFDF3;4411.
+(rerunfilecheck)             Checksum: 8FAD67C80A067047C27D6FDD17092E04;4650.
  ) 
 Here is how much of TeX's memory you used:
- 13928 strings out of 476041
- 222396 string characters out of 5793174
- 1870388 words of memory out of 6000000
+ 13938 strings out of 476041
+ 222503 string characters out of 5793174
+ 1871388 words of memory out of 6000000
  33983 multiletter control sequences out of 15000+600000
- 530239 words of font info for 148 fonts, out of 8000000 for 9000
+ 530477 words of font info for 152 fonts, out of 8000000 for 9000
  1137 hyphenation exceptions out of 8191
- 75i,9n,76p,1065b,464s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,9n,76p,1197b,464s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on TER_CR.pdf (6 pages, 2144906 bytes).
+Output written on TER_CR.pdf (6 pages, 2152476 bytes).
 PDF statistics:
- 241 PDF objects out of 1000 (max. 8388607)
- 190 compressed objects within 2 object streams
- 44 named destinations out of 1000 (max. 500000)
+ 256 PDF objects out of 1000 (max. 8388607)
+ 203 compressed objects within 3 object streams
+ 46 named destinations out of 1000 (max. 500000)
  33450 words of extra memory for PDF output out of 35830 (max. 10000000)
 

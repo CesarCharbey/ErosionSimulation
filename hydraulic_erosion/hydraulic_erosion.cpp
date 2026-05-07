@@ -25,7 +25,6 @@ const char *HEIGHTMAP_FILES[] = {
     "heightmaps/heightmap1.png",
     "heightmaps/grand_canyon_heightmap.png",
     "heightmaps/nepal_mountain_range.png",
-    "heightmaps/islande.png",
     "heightmaps/reunion.png",
 };
 
@@ -58,11 +57,11 @@ glm::vec2 RIVER_SOURCE_POS(GRID_SIZE * 0.7f, GRID_SIZE * 0.7f); // Default posit
 
 // Erosion
 float KC = 0.05f;  // Sediment capacity
-float KS = 0.005f; // Dissolving constant
+float KS = 0.03f;  // Dissolving constant
 float KD = 0.03f;  // Deposition constant
 float KE = 0.015f; // Evaporation constant (1%/s)
 float KE_STAGNANT = 3.0f;
-float RAIN_RATE = 0.05f;
+float RAIN_RATE = 0.01f;
 float THERMAL_EROSION_RATE = 0.05f;
 float TALUS_ANGLE = glm::radians(45.0f);
 
@@ -75,6 +74,9 @@ float BASE_HEIGHT = 10.0f;     // Base height variation
 
 // Simulation speed
 int ITERATIONS_PER_FRAME = 1;
+
+float TOTAL_SIMULATED_YEARS = 0.0f;
+const float YEARS_PER_PHYSICS_SECOND = 10000.0f; // 1 second of physics simulates 10,000 years of erosion
 
 bool useGPU = true;
 float lastPhysicsTime = 0.0f;
@@ -378,7 +380,7 @@ public:
         glBindImageTexture(2, sedimentTex[READ], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
         glBindImageTexture(3, sedimentTex[WRITE], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
         glBindImageTexture(4, velocityTex, 0, GL_FALSE, 0, GL_READ_ONLY, GL_RG32F);
-        glBindImageTexture(5, waterTex[READ], 0, GL_FALSE, 0, GL_READ_ONLY, GL_R32F);
+        glBindImageTexture(5, waterTex[WRITE], 0, GL_FALSE, 0, GL_READ_WRITE, GL_R32F);
         glUniform1f(glGetUniformLocation(erosionShader, "Kc"), KC);
         glUniform1f(glGetUniformLocation(erosionShader, "Ks"), KS);
         glUniform1f(glGetUniformLocation(erosionShader, "Kd"), KD);
@@ -926,6 +928,7 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
+    bool vSyncEnabled = true;
     glfwSwapInterval(1); // Enable V-Sync (0 = off, 1 = on)
 
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -1001,6 +1004,8 @@ int main()
             ImGui::Text("FPS: %.1f", io.Framerate);
 
             ImGui::Separator();
+            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Time Elapsed : %.0f years", TOTAL_SIMULATED_YEARS);
+            ImGui::Separator();
 
             ImGui::Text("Performance (1 iter)");
             if (useGPU)
@@ -1024,6 +1029,19 @@ int main()
             }
             ImGui::Separator();
             ImGui::Checkbox("Use GPU", &useGPU);
+            ImGui::Separator();
+
+            if (ImGui::Checkbox("V-Sync", &vSyncEnabled))
+            {
+                if (vSyncEnabled)
+                {
+                    glfwSwapInterval(1); // Monitor refresh rate
+                }
+                else
+                {
+                    glfwSwapInterval(0); // FPS uncapped
+                }
+            }
             ImGui::Separator();
 
             ImGui::Separator();
@@ -1090,6 +1108,7 @@ int main()
                 if (ImGui::Button("Generate / Reload Terrain") || changed)
                 {
                     simulation.initializeTerrain();
+                    TOTAL_SIMULATED_YEARS = 0.0f;
 
                     if (!useGPU)
                     {
@@ -1174,6 +1193,8 @@ int main()
 
                 cpuSim->simulationStep(isPlacingRiver);
             }
+
+            TOTAL_SIMULATED_YEARS += DT * YEARS_PER_PHYSICS_SECOND;
         }
 
         if (useGPU != wasUsingGPU)

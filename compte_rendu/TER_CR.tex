@@ -76,7 +76,7 @@ Notre projet tire pleinement parti de la transition architecturale vers les \tex
 \subsection{L'Érosion Thermique comme Nécessité Topologique}
 Si le modèle hydraulique creuse des lits de rivières convaincants, il engendre un artefact visuel majeur : l'apparition de falaises parfaitement verticales au bord des flux d'eau, des structures géologiquement instables. Schott et al. \cite{SGG24} soulignent que ces approches manquent de précision et requièrent des processus d'amplification.
 
-Pour répondre à cette problématique, Jákó et Szirmay-Kalos \cite{Jako11} ont mis en évidence la nécessité de coupler l'hydraulique à un modèle d'\textbf{érosion thermique}. Ce processus physique complémentaire simule l'effondrement gravitationnel, le détachement de la roche et la formation d'éboulis dès lors que l'inclinaison locale dépasse l'angle de repos (\textit{talus angle}) spécifique au matériau.
+Pour répondre à cette problématique, Jákó et Szirmay-Kalos \cite{Jako11} ont mis en évidence la nécessité de coupler l'hydraulique à un modèle d'\textbf{érosion thermique}. Ce processus physique complémentaire simule l'effondrement gravitationnel, le détachement de la roche et la formation d'éboulis dès lors que l'inclinaison locale dépasse l'angle de repos spécifique au matériau.
 
 % Modèle de base
 % Modèle de base
@@ -126,7 +126,7 @@ $$ \Delta t \le \frac{\Delta x}{v_{max}} $$
 Notre interface ImGui avertit l'utilisateur de manière dynamique si les paramètres de gravité ou d'apport d'eau nécessitent une réduction du pas de temps pour maintenir la cohésion mathématique de la simulation.
 
 \subsection{Implémentation du Pipeline et Gestion Mémoire}
-La boucle de calcul est exécutée par des groupes de travail (\textit{Workgroups}) matériels de $16 \times 16$ \textit{threads}, une taille empiriquement optimale pour maximiser l'occupation des cœurs de calcul (CUs) de l'architecture graphique.
+La boucle de calcul est exécutée par des groupes de travail (\textit{Workgroups}) matériels de $16 \times 16$ \textit{threads}, une taille empiriquement optimale pour maximiser l'occupation des cœurs de calcul de l'architecture graphique.
 
 Pour pallier les problèmes de concurrence en écriture inévitables sur une grille globale, notre architecture repose sur un \textbf{double tamponnage} (\textit{ping-pong buffering}). Les textures stockant les hauteurs, l'eau et les sédiments sont dupliquées. À l'itération $i$, les shaders lisent l'état figé dans les tampons \texttt{READ} et inscrivent les résultats dans les tampons \texttt{WRITE}.
 
@@ -152,13 +152,19 @@ L'évaluation de la pression hy\-dros\-ta\-tique locale s'effectue via le modèl
 La nouvelle hauteur de la colonne d'eau est déduite du bilan des flux (entrants et sortants), ce qui permet d'inférer le champ vectoriel des vitesses $\vec{v}$. Nous y avons introduit une amélioration struc\-tu\-relle majeure : un facteur de friction du terrain. Cette constante d'a\-mor\-tis\-se\-ment empêche l'eau de glisser de manière irréaliste sur les pentes abruptes. Cette correction compense directement un défaut du modèle initial de Mei et al. \cite{MDH07}, assurant au fluide un temps de résidence suffisant sur les falaises pour y sculpter de véritables ravins.
 
 \paragraph{4. Érosion et Sédimentation (\texttt{erosion\_\allowbreak deposition.\allowbreak glsl}) :}
-Cette passe évalue l'altération physique de la topologie. L'algorithme compare la charge sé\-di\-men\-taire en suspension à la capacité de transport théorique du fluide (qui est pro\-por\-tion\-nelle à la norme du vecteur vitesse et à l'inclinaison locale). Si la capacité locale excède la charge actuelle, le fluide dissout la roche sous-jacente (érosion). À l'inverse, si la vitesse chute ou si le terrain s'aplanit, l'eau devient sursaturée et la matière se dépose (sédimentation).
+Cette passe évalue l'altération physique de la topologie. Pour pallier le manque de réalisme du modèle de base, nous avons intégré deux améliorations majeures issues des travaux de Jákó et Szirmay-Kalos \cite{Jako11}. Premièrement, la force d'érosion n'est plus basée sur une simple pente 2D, mais sur une collision 3D calculée via le produit scalaire entre le vecteur de vélocité tridimensionnel de l'eau et la normale locale du terrain. L'eau creuse ainsi beaucoup plus fortement lorsqu'elle percute un obstacle de face. Deuxièmement, nous avons implémenté un frein en eaux profondes ($l_{max}$) : l'érosion s'annule progressivement lorsque la profondeur de l'eau augmente. Ce mécanisme protège le fond des lacs et force les rivières à déposer leurs sédiments aux embouchures, générant des deltas naturels. Enfin, le couplage strict du volume Eau-Sédiment a été respecté : la roche dissoute augmente instantanément le volume d'eau, et inversement lors de la déposition, garantissant une conservation de masse absolue et prévenant les oscillations de surface.
 
 \paragraph{5. Transport Sédimentaire (\texttt{sediment\_\allowbreak transport.\allowbreak glsl}) :}
 Le déplacement de la matière minérale est modélisé par une advection se\-mi-La\-gran\-gienne rétrograde, utilisant une interpolation bilinéaire continue. Afin de contrer l'artefact ma\-thé\-ma\-tique de duplication de la masse inhérent à cette technique (détaillé dans la sous-section suivante), nous y avons codé en dur un facteur d'atténuation (multiplication par $0,999$ par trame). Cette passe gère également la destruction des sédiments atteignant les frontières (puits).
 
 \paragraph{6. Évaporation (\texttt{evaporation.glsl}) :}
 Le cycle physique s'achève par l'application d'un taux d'évaporation réduisant progressivement le volume d'eau ambiant. Cette dernière passe assure simultanément le comportement de "drain" aux limites de la carte en forçant la hauteur d'eau à zéro sur les bords, complétant ainsi la transformation du domaine en système ouvert.
+
+\paragraph{7. Calcul des Flux Thermiques (\texttt{thermal\_\allowbreak flux.glsl}) :}
+Début du cycle d'érosion thermique. Sur le modèle des fluides, le glissement de terrain est calculé via des tuyaux virtuels sur un voisinage de Moore (8 directions) \cite{Jako11}. L'algorithme calcule la différence de hauteur maximale avec le voisinage et distribue proportionnellement le volume d'éboulement dans les 8 directions. De plus, une carte de dureté locale $R(x,y)$ modulant l'angle de talus est générée dynamiquement en combinant l'altitude et un bruit spatial, permettant à la roche dure de former des falaises acérées \cite{Jako11}. Enfin, l'érosion thermique est localement inhibée par la présence d'un flux d'eau, protégeant ainsi les ravins fraîchement creusés.
+
+\paragraph{8. Application Thermique (\texttt{thermal\_\allowbreak apply.glsl}) :}
+La topologie est définitivement mise à jour en soustrayant la somme des flux thermiques sortants de la cellule, et en y additionnant les flux entrants provenant des 8 cellules voisines. Cette séparation en deux passes garantit une exécution sans \textit{race condition} sur le GPU.
 
 \subsection{Défis Numériques et Conservation de la Masse}
 La transposition d'un modèle mathématique continu sur une grille discrète engendre des instabilités et des artefacts numériques qu'il a fallu corriger pour garantir la crédibilité de la simulation sur le long terme.
@@ -174,45 +180,52 @@ Pour restaurer l'intégrité de la simulation sans recourir à un solveur strict
     \item \textbf{Drains frontaliers (Système ouvert) :} Pour dissiper l'effet terrarium, les conditions aux limites ont été repensées en transformant la grille en un système ouvert. Les cellules situées sur le périmètre extérieur de la carte agissent désormais comme des "drains" continus (hauteur d'eau et sédiments forcés à zéro en fin de cycle). Cette modification permet à la matière de s'évacuer définitivement du domaine, simulant de manière élégante un déversement naturel vers un océan virtuel infini.
 \end{itemize}
 
-\section{Résultats et Évaluation}
+\subsection{Érosion Thermique Avancée : Dureté Locale et Voisinage de Moore}
+L'implémentation originelle de l'érosion thermique soulevait deux problématiques géométriques majeures : l'apparition de structures pyramidales artificielles (dues à l'évaluation sur un voisinage de von Neumann limité à 4 directions) et un aspect "plastique" globalisé (dû à un angle de talus constant sur tout le domaine).
+
+Pour y remédier, notre algorithme intègre le modèle de Jákó et Szirmay-Kalos \cite{Jako11}. Le transfert de sédiments est désormais évalué sur un voisinage de Moore (8 directions), permettant la formation de cônes d'éboulis organiques et parfaitement circulaires. Plutôt que de déplacer la matière de manière gloutonne, nous avons appliqué le paradigme Eulérien des "tuyaux virtuels" au sol lui-même. Une première passe calcule les volumes de terre devant s'effondrer et les stocke sous forme de flux directionnels virtuels, tandis qu'une seconde passe synchronise la nouvelle topologie en additionnant ces flux. Cette architecture en deux temps résout élégamment les dépendances d'écriture tout en garantissant la conservation stricte du volume topologique.
+
+Afin de briser l'homogénéité visuelle (l'effet plastique), la tangente de l'angle de talus est modulée en chaque point par un coefficient de dureté locale $R(x,y)$. Ce coefficient est généré dynamiquement sur le GPU en combinant l'élévation (la roche en haute altitude étant physiquement plus dense) et un bruit pseudo-aléatoire simulant l'hétérogénéité des strates géologiques. Les sommets peuvent ainsi soutenir des falaises presque verticales, tandis que les vallées s'affaissent en pentes douces, créant une richesse visuelle inatteignable avec un angle de repos statique.
 
 \subsection{Analyse des Performances et Benchmarks}
 Afin de quantifier de manière irréfutable les bénéfices de l'architecture Compute Shader, nous avons développé une implémentation rigoureusement équivalente s'exécutant de manière séquentielle sur le processeur (CPU). Ce programme en C++ natif nous sert de \textit{baseline} absolue pour mesurer le ratio d'accélération sur des \textit{heightmaps} d'entrée identiques.
 
-Notre évaluation intègre par ailleurs les mesures documentées par Mei et al. en 2007 \cite{MDH07} (exécutées sur un Pentium IV et une NVIDIA GeForce 8800 GTX). À l'époque, les auteurs obtenaient un temps de cycle global de 16.95\,ms pour une grille $1024 \times 1024$, soit environ 59 itérations par seconde.
-
-Nos propres temps d'exécution GPU ont été isolés avec une précision extrême via les \textit{Timestamp Queries} d'OpenGL, éliminant ainsi le bruit lié aux latences du système d'exploitation. La plateforme de test est composée d'un processeur AMD Ryzen 5 2600 et d'une carte graphique AMD Radeon RX 5700.
+Notre évaluation intègre les mesures documentées par Mei et al. en 2007 \cite{MDH07} (GeForce 8800 GTX), ainsi que les résultats plus récents de Jákó et Szirmay-Kalos en 2011 \cite{Jako11} obtenus sur une architecture ATI Radeon HD4870 \cite{Jako11}. À titre de comparaison, le modèle de 2011 atteignait un temps de cycle global de 15,47\,ms pour une grille de résolution similaire ($1024 \times 1014$) \cite{Jako11}. Nos propres mesures ont été isolées via les \textit{Timestamp Queries} d'OpenGL sur une plateforme composée d'un processeur AMD Ryzen 5 2600 et d'une carte graphique AMD Radeon RX 5700.
 
 \begin{table}[htbp]
     \centering
     \resizebox{\columnwidth}{!}{%
-        \begin{tabular}{lccc}
+        \begin{tabular}{lcccc}
             \toprule
-            \textbf{Étape de calcul} & \textbf{Mei et al. (2007)} & \textbf{Notre CPU}  & \textbf{Notre GPU} \\
+            \textbf{Étape de calcul} & \textbf{Mei (2007)} & \textbf{Jákó (2011)} & \textbf{Notre CPU}   & \textbf{Notre GPU} \\
             \midrule
-            Simulation Physique      & 6.65 ms                    & 726.215 ms          & 0.637 ms           \\
-            Érosion Thermique        & N/A                        & 120.169 ms          & 0.033 ms           \\
-            Rendu Visuel             & 10.31 ms                   & 15.607 ms           & 0.453 ms           \\
+            Sim. Physique (Eau)      & 6.65 ms             & N/A                  & 898.244 ms           & 0.408 ms           \\
+            Érosion Thermique        & N/A                 & N/A                  & 821.458 ms           & 0.223 ms           \\
+            Rendu Visuel             & 10.31 ms            & N/A                  & 3.227 ms             & 0.407 ms           \\
             \midrule
-            \textbf{Temps de Cycle}  & \textbf{16.95 ms}          & \textbf{861.992 ms} & \textbf{1.123 ms}  \\
+            \textbf{Temps de Cycle}  & \textbf{16.95 ms}   & \textbf{15.47 ms}    & \textbf{1722.929 ms} & \textbf{1.037 ms}  \\
             \bottomrule
         \end{tabular}%
     }
-    \caption{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données de Mei et al. \cite{MDH07} servent de repère. Un temps de cycle de 1.123\,ms correspond à une fréquence théorique d'environ 890 images par seconde (FPS).}
+    \caption{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite{MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS).}
     \label{tab:perf}
 \end{table}
 
-L'analyse de ces métriques illustre de manière spectaculaire le fossé architectural entre le calcul séquentiel et le traitement matriciel. L'implémentation CPU est terrassée par le nombre de cellules à traiter (plus d'un million par passe) et les défauts de cache incessants, aboutissant à un temps de cycle critique de 862\,ms (incompatible avec le temps réel, à peine 1,16 FPS).
+L'analyse de ces métriques illustre un saut technologique majeur. L'implémentation CPU est terrassée par la complexité algorithmique du voisinage de Moore (8 directions) et les calculs de collision 3D, aboutissant à un temps de cycle critique de 1,72\,seconde. Ce délai rend toute interaction impossible sur processeur (0,58 FPS).
 
-Le basculement sur GPU via Compute Shaders pulvérise ces limitations. La boucle complète, incluant notre passe d'érosion thermique, s'évalue en 1,12\,ms. Le facteur d'accélération entre notre implémentation CPU et GPU dépasse ainsi les \textbf{767x}. L'optimisation est d'autant plus éclatante sur l'érosion thermique : reposant sur un calcul purement local (voisinage immédiat), cet algorithme est naturellement parallélisable. Le GPU exécute cette tâche en 0,033\,ms (soit une accélération de 3600x face au CPU), prouvant que le coût computationnel de cette amélioration géomorphologique est quasi-nul.
+Le basculement sur GPU via Compute Shaders pulvérise ces limitations, ramenant la boucle complète à seulement 1,037\,ms. Le facteur d'accélération global entre notre implémentation CPU et GPU atteint ainsi le ratio colossal de \textbf{1661x}. L'optimisation est particulièrement visible sur l'érosion thermique : malgré la complexité du modèle de Jákó (calcul de flux directionnels et dureté locale), le GPU exécute cette tâche en 0,223\,ms (soit une accélération de 3680x face au CPU). Ces résultats prouvent que l'architecture moderne permet d'exécuter des modèles physiques autrefois coûteux (\cite{MDH07, Jako11}) en une fraction de milliseconde.
 
 \subsection{Interactivité et Découplage Temporel}
-Cette colossale réserve de puissance (framerate théorique frôlant les 900 FPS) nous a permis d'implémenter un découplage temporel profond entre le moteur physique et le moteur de rendu. L'utilisateur peut, via l'interface ImGui, ordonner l'exécution de dizaines d'itérations physiques (\texttt{ITERATIONS\_\allowbreak PER\_\allowbreak FRAME}) par image affichée à l'écran. Ce mécanisme permet d'accélérer visuellement l'écoulement des siècles géologiques de manière fulgurante, tout en laissant la navigation de la caméra parfaitement fluide. De plus, l'interface offre la possibilité d'altérer les constantes physiques ou de déplacer des sources de rivières à la volée, transformant le programme en un puissant simulateur interactif.
+Cette colossale réserve de puissance (framerate théorique frôlant les 960 FPS) nous a permis d'implémenter un découplage temporel profond entre le moteur physique et le moteur de rendu. L'utilisateur peut, via l'interface ImGui, ordonner l'exécution de dizaines d'itérations physiques (\texttt{ITERATIONS\_PER\_FRAME}) par image affichée à l'écran.
+
+Afin de donner une échelle de grandeur à cette performance, nous avons introduit un facteur de conversion vers le temps géologique. En considérant qu'une unité de temps physique ($dt = 1$) équivaut à 10\,000 ans d'érosion naturelle, notre simulateur permet de compresser les millénaires de manière fulgurante. À titre d'exemple, avec un pas de temps $\Delta t = 0,0015$ et 500 itérations par trame, une seule seconde de simulation réelle permet de calculer environ \textbf{11\,250 années géologiques}.
+
+Ce mécanisme permet d'observer en quelques minutes des processus qui nécessiteraient normalement des millions d'années, comme le creusement de canyons profonds ou l'aplanissement de massifs montagneux (pénéplanation). L'interface offre de surcroît la possibilité d'altérer les constantes physiques ou de déplacer des sources de rivières à la volée, transformant le programme en un puissant laboratoire géomorphologique interactif où l'utilisateur navigue fluidement à travers les époques.
 
 \section{Conclusion et Perspectives}
 L'objectif central de ce projet TER consistait à concevoir un moteur d'érosion procédurale interactif, s'appuyant sur le modèle historique de Mei et al. \cite{MDH07}, tout en comblant son manque de réalisme topologique \cite{SGG24} via l'intégration des technologies graphiques contemporaines. Ce cahier des charges a été rempli avec succès.
 
-Sur le plan géométrique, l'ajout du modèle d'érosion thermique s'est révélé indispensable pour affaisser les falaises artificielles laissées par la dynamique de l'eau, favorisant l'apparition de talus et d'éboulis naturels. Sur le plan de l'ingénierie logicielle, la structuration des données en \textit{ping-pong buffering} et la maîtrise des barrières mémoire au sein des Compute Shaders ont abouti à des performances de premier ordre (1,12 ms par cycle pour plus d'un million de sommets). L'analyse croisée avec notre propre version CPU de référence a permis de quantifier scientifiquement l'apport matériel, validant une accélération matérielle excédant 760x.
+Sur le plan géométrique, l'intégration du modèle de Jákó et Szirmay-Kalos \cite{Jako11} s'est révélée déterminante. L'ajout du frein en eaux profondes, de l'érosion par collision 3D, et de l'érosion thermique gérée par tuyaux virtuels sur 8 directions a permis d'obtenir une topologie extrêmement organique, riche en deltas et en éboulis hétérogènes. Sur le plan de l'ingénierie logicielle, la structuration stricte des données en \textit{ping-pong buffering}, la conservation locale de la masse (incluant le couplage du volume Eau-Sédiment), et la maîtrise des barrières mémoire au sein des Compute Shaders ont abouti à des performances de premier ordre (1,12 ms par cycle pour plus d'un million de sommets). L'analyse croisée avec notre propre version CPU de référence a permis de quantifier scientifiquement l'apport matériel, validant une accélération matérielle excédant 1660x.
 
 Fort de cette architecture stable et massivement optimisée, les perspectives d'évolution sont particulièrement prometteuses. La contrainte inhérente aux \textit{heightmaps} 2.5D (l'impossibilité de modéliser des surplombs, grottes ou arches rocheuses) pourrait être levée en orientant le moteur vers des structures stratifiées volumétriques (\textit{Multi-Layered Heightmaps}) \cite{Nilles24}. À une échelle écosystémique, le couplage de cette érosion avec un modèle végétal dynamique où l'humidité favorise la croissance d'une flore dont le réseau racinaire renforce mécaniquement la résistance du sol à l'érosion hydrique  constituerait le défi ultime pour la génération procédurale de biomes planétaires complets.
 
