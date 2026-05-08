@@ -675,6 +675,16 @@ INPUT ./images/pipe_model.png
 INPUT images/pipe_model.png
 INPUT ./images/pipe_model.png
 INPUT ./images/pipe_model.png
+INPUT ./images/thermal.png
+INPUT ./images/thermal.png
+INPUT images/thermal.png
+INPUT ./images/thermal.png
+INPUT ./images/thermal.png
+INPUT ./images/pipes_thermal_erosion.png
+INPUT ./images/pipes_thermal_erosion.png
+INPUT images/pipes_thermal_erosion.png
+INPUT ./images/pipes_thermal_erosion.png
+INPUT ./images/pipes_thermal_erosion.png
 INPUT ./images/ping_pong.png
 INPUT ./images/ping_pong.png
 INPUT images/ping_pong.png

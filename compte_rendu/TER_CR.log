@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2026.3.24)  7 MAY 2026 09:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2026.3.24)  8 MAY 2026 10:44
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -431,12 +431,12 @@ Package microtype Info: No adjustment of character kerning.
  (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman (RS)
 )
-<images/intro_landscape.jpg, id=78, 308.352pt x 173.448pt>
+<images/intro_landscape.jpg, id=82, 308.352pt x 173.448pt>
 File: images/intro_landscape.jpg Graphic file (type jpg)
 <use images/intro_landscape.jpg>
 Package pdftex.def Info: images/intro_landscape.jpg  used on input line 37.
 (pdftex.def)             Requested size: 188.3061pt x 105.92221pt.
-<images/perlin_vs_erosion.png, id=80, 1927.2pt x 774.895pt>
+<images/perlin_vs_erosion.png, id=84, 1927.2pt x 774.895pt>
 File: images/perlin_vs_erosion.png Graphic file (type png)
 <use images/perlin_vs_erosion.png>
 Package pdftex.def Info: images/perlin_vs_erosion.png  used on input line 51.
@@ -464,71 +464,127 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
  [2]
-<images/data_structure.png, id=116, 721.69624pt x 382.42876pt>
+<images/data_structure.png, id=120, 721.69624pt x 382.42876pt>
 File: images/data_structure.png Graphic file (type png)
 <use images/data_structure.png>
-Package pdftex.def Info: images/data_structure.png  used on input line 106.
+Package pdftex.def Info: images/data_structure.png  used on input line 105.
 (pdftex.def)             Requested size: 200.86061pt x 106.43742pt.
-<images/pipe_model.png, id=119, 721.69624pt x 382.42876pt>
+<images/pipe_model.png, id=123, 721.69624pt x 382.42876pt>
 File: images/pipe_model.png Graphic file (type png)
 <use images/pipe_model.png>
-Package pdftex.def Info: images/pipe_model.png  used on input line 116.
+Package pdftex.def Info: images/pipe_model.png  used on input line 115.
 (pdftex.def)             Requested size: 175.7516pt x 93.1269pt.
  [3
 pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.134 
+l.131 
       
 pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.134 
+l.131 
        <./images/data_structure.png> <./images/pipe_model.png>]
-<images/ping_pong.png, id=134, 1284.8pt x 722.7pt>
-File: images/ping_pong.png Graphic file (type png)
-<use images/ping_pong.png>
-Package pdftex.def Info: images/ping_pong.png  used on input line 137.
-(pdftex.def)             Requested size: 225.96579pt x 127.10295pt.
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 146.
-
-Underfull \hbox (badness 10000) in paragraph at lines 164--165
- []\T1/cmr/bx/n/10 (+20) 7. Cal-cul des Flux Ther-miques (\T1/cmtt/m/n/10 thermal_
- []
-
-
-Underfull \hbox (badness 1776) in paragraph at lines 164--165
-\T1/cmtt/m/n/10 flux.glsl\T1/cmr/bx/n/10 (+20) ) :[] \T1/cmr/m/n/10 (+20) Dé-but du cycle d'éro-sion ther-mique.
- []
-
-[4
+<images/thermal.png, id=141, 768.8725pt x 575.14874pt>
+File: images/thermal.png Graphic file (type png)
+<use images/thermal.png>
+Package pdftex.def Info: images/thermal.png  used on input line 144.
+(pdftex.def)             Requested size: 175.7516pt x 131.46526pt.
+<images/pipes_thermal_erosion.png, id=142, 862.22125pt x 621.32124pt>
+File: images/pipes_thermal_erosion.png Graphic file (type png)
+<use images/pipes_thermal_erosion.png>
+Package pdftex.def Info: images/pipes_thermal_erosion.png  used on input line 155.
+(pdftex.def)             Requested size: 200.86061pt x 144.74011pt.
+ [4
 pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.165 
-       <./images/ping_pong.png>] [5] [6
+l.167 
+      
+pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.167 
+       <./images/thermal.png> <./images/pipes_thermal_erosion.png>]
+<images/ping_pong.png, id=151, 1284.8pt x 722.7pt>
+File: images/ping_pong.png Graphic file (type png)
+<use images/ping_pong.png>
+Package pdftex.def Info: images/ping_pong.png  used on input line 174.
+(pdftex.def)             Requested size: 225.96579pt x 127.10295pt.
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 184.
+
+Underfull \hbox (badness 10000) in paragraph at lines 184--185
+ []\T1/cmr/bx/n/10 (+20) 1. In-cré-men-ta-tion du ni-veau d'eau
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 187--188
+ []\T1/cmr/bx/n/10 (+20) 2. Cal-cul des Flux par Tuyaux Vir-tuels
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 192--193
+ []\T1/cmr/bx/n/10 (+20) 3. Mise à Jour et Champ de Vé-lo-cité
+ []
+
+
+Underfull \hbox (badness 2744) in paragraph at lines 192--193
+\T1/cmr/bx/n/10 (+20) (\T1/cmtt/m/n/10 water_update.glsl\T1/cmr/bx/n/10 (+20) ) :[] \T1/cmr/m/n/10 (+20) La nou-velle hau-teur d'eau
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 195--196
+ []\T1/cmr/bx/n/10 (+20) 4. Éro-sion et Sé-di-men-ta-tion Avan-cées
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 200--201
+ []\T1/cmr/bx/n/10 (+20) 5. Trans-port Sé-di-men-taire par Ad-vec-tion
+ []
+
+
+Underfull \hbox (badness 3312) in paragraph at lines 200--201
+\T1/cmr/bx/n/10 (+20) (\T1/cmtt/m/n/10 sediment_transport.glsl\T1/cmr/bx/n/10 (+20) ) :[] \T1/cmr/m/n/10 (+20) Les sé-di-ments $\OML/cmm/m/it/10 s$ \T1/cmr/m/n/10 (+20) ne
+ []
+
+[5
+pdfTeX warning (ext4): destination with the same identifier (name{figure.7}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.201 
+       <./images/ping_pong.png>]
+Underfull \hbox (badness 6559) in paragraph at lines 203--204
+ []\T1/cmr/bx/n/10 (+20) 6. Éva-po-ra-tion et Condi-tions aux Li-mites
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 206--207
+ []\T1/cmr/bx/n/10 (+20) 7. Cal-cul des Flux Ther-miques
+ []
+
+[6
 pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.262 \end{document}
-                    ] (./TER_CR.aux)
+l.250 
+      ] [7] (./TER_CR.aux)
 Package rerunfilecheck Info: File `TER_CR.out' has not changed.
-(rerunfilecheck)             Checksum: 8FAD67C80A067047C27D6FDD17092E04;4650.
+(rerunfilecheck)             Checksum: AA71E3965DA0323C62D4CED8A55D7D85;4960.
  ) 
 Here is how much of TeX's memory you used:
- 13938 strings out of 476041
- 222503 string characters out of 5793174
- 1871388 words of memory out of 6000000
- 33983 multiletter control sequences out of 15000+600000
- 530477 words of font info for 152 fonts, out of 8000000 for 9000
+ 13965 strings out of 476041
+ 223047 string characters out of 5793174
+ 1870388 words of memory out of 6000000
+ 34004 multiletter control sequences out of 15000+600000
+ 530490 words of font info for 152 fonts, out of 8000000 for 9000
  1137 hyphenation exceptions out of 8191
- 75i,9n,76p,1197b,464s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,9n,76p,1065b,560s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on TER_CR.pdf (6 pages, 2152476 bytes).
+Output written on TER_CR.pdf (7 pages, 2233276 bytes).
 PDF statistics:
- 256 PDF objects out of 1000 (max. 8388607)
- 203 compressed objects within 3 object streams
- 46 named destinations out of 1000 (max. 500000)
- 33450 words of extra memory for PDF output out of 35830 (max. 10000000)
+ 271 PDF objects out of 1000 (max. 8388607)
+ 213 compressed objects within 3 object streams
+ 50 named destinations out of 1000 (max. 500000)
+ 33468 words of extra memory for PDF output out of 35830 (max. 10000000)
 
