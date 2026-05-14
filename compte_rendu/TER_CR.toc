@@ -1,0 +1,42 @@
+\babel@toc {french}{}\relax 
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Contexte et Enjeux Industriels}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}La Problématique de l'Érosion en Temps Réel}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}État de l'Art et Positionnement}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Érosion Hydraulique : Le Paradigme Eulérien}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Le Débat Conceptuel : Grilles vs Particules}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}La Révolution Matérielle des Compute Shaders}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}L'Érosion Thermique comme Nécessité Topologique}{4}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Modélisation de l'Écoulement : Du Continu au Discret}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Le "Graal" de la Physique : Les Équations de Navier-Stokes}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}La Simplification des Eaux Peu Profondes (SWE)}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Le Modèle des Tuyaux Virtuels}{5}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Méthodologie et Ingénierie}{5}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Choix Technologiques et Architecture Logicielle}{5}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Génération Topographique et Importation}{5}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Structures de Données et Stockage GPU}{5}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Améliorations du Modèle de Mei : Apports de Jákó et Szirmay-Kalos}{6}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Érosion Thermique Avancée : Dureté Locale et Voisinage de Moore}{6}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Stabilité Numérique et Condition CFL}{7}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}Implémentation du Pipeline et Gestion Mémoire}{7}{subsection.4.7}%
+\contentsline {subsection}{\numberline {4.8}Le Pipeline de Rendu Graphique}{7}{subsection.4.8}%
+\contentsline {paragraph}{Déplacement des Sommets sur GPU (\textit {Vertex Displacement}) :}{7}{section*.5}%
+\contentsline {paragraph}{Calcul des Normales à la Volée :}{7}{section*.6}%
+\contentsline {paragraph}{Ombrage et Coloration Topographique (\textit {Shading}) :}{7}{section*.7}%
+\contentsline {section}{\numberline {5}Détails de l'Implémentation du Pipeline}{8}{section.5}%
+\contentsline {paragraph}{1. Apport Hydrique : Pluie et Sources (\texttt {water\_increment.glsl}) :}{8}{section*.8}%
+\contentsline {paragraph}{2. Calcul des Flux par Tuyaux Virtuels (\texttt {flux\_compute.glsl}) :}{8}{section*.9}%
+\contentsline {paragraph}{3. Mis à jour du niveau d'eau(\texttt {water\_update.glsl}) :}{8}{section*.10}%
+\contentsline {paragraph}{4. Érosion et Sédimentation Avancées (\texttt {erosion\_deposition.glsl}) :}{8}{section*.11}%
+\contentsline {paragraph}{5. Transport Sédimentaire par Advection (\texttt {sediment\_transport.glsl}) :}{9}{section*.12}%
+\contentsline {paragraph}{6. Évaporation et Conditions aux Limites (\texttt {evaporation.glsl}) :}{9}{section*.13}%
+\contentsline {paragraph}{7. Évaluation de l'Instabilité Gravitationnelle (\texttt {thermal\_flux.glsl}) :}{9}{section*.14}%
+\contentsline {paragraph}{8. Synchronisation (\texttt {thermal\_apply.glsl}) :}{9}{section*.15}%
+\contentsline {subsection}{\numberline {5.1}Limites Numériques et Conditions aux Frontières}{10}{subsection.5.1}%
+\contentsline {section}{\numberline {6}Résultats et Évaluation}{10}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Interactivité et Découplage Temporel}{10}{subsection.6.1}%
+\contentsline {section}{\numberline {7}Discussion et Analyse Critique}{11}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Biais Matériel et Goulets d'Étranglement}{11}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Validation Morphologique Qualitetive}{11}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}Positionnement face à l'Industrie (Outils Hors-Ligne)}{11}{subsection.7.3}%
+\contentsline {section}{\numberline {8}Conclusion et Perspectives}{11}{section.8}%

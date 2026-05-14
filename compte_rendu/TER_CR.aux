@@ -19,83 +19,108 @@
 \gdef\HyperFirstAtBeginDocument#1{#1}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
+\babel@aux{french}{}
+\citation{MDH07}
+\citation{MDH07}
+\citation{MDH07}
+\citation{Jako11}
 \citation{MDH07}
 \citation{SGG24}
+\citation{Jako11}
 \citation{MDH07}
+\citation{Jako11}
 \citation{MDH07}
-\babel@aux{french}{}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces L'érosion hydraulique et thermique façonnent naturellement la géomorphologie des paysages, creusant des vallées et formant des éboulis.}}{1}{figure.1}\protected@file@percent }
-\newlabel{fig:intro_landscape}{{1}{1}{L'érosion hydraulique et thermique façonnent naturellement la géomorphologie des paysages, creusant des vallées et formant des éboulis}{figure.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}État de l'Art et Positionnement}{1}{section.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Comparaison entre une génération procédurale classique par bruit de Perlin (gauche) et un terrain soumis aux forces d'érosion (droite).}}{1}{figure.2}\protected@file@percent }
-\newlabel{fig:perlin_vs_erosion}{{2}{1}{Comparaison entre une génération procédurale classique par bruit de Perlin (gauche) et un terrain soumis aux forces d'érosion (droite)}{figure.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{3}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Contexte et Enjeux Industriels}{3}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}La Problématique de l'Érosion en Temps Réel}{3}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}État de l'Art et Positionnement}{3}{section.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Comparaison entre une génération procédurale classique par bruit de Perlin (gauche) et un terrain soumis aux forces d'érosion (droite).}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:perlin_vs_erosion}{{1}{3}{Comparaison entre une génération procédurale classique par bruit de Perlin (gauche) et un terrain soumis aux forces d'érosion (droite)}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Érosion Hydraulique : Le Paradigme Eulérien}{3}{subsection.2.1}\protected@file@percent }
 \citation{Hartley24}
 \citation{MDH07}
 \citation{SGG24}
 \citation{Jako11}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Érosion Hydraulique : Le Paradigme Eulérien}{2}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Le Débat Conceptuel : Grilles vs Particules}{2}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}La Révolution Matérielle des Compute Shaders}{2}{subsection.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}L'Érosion Thermique comme Nécessité Topologique}{2}{subsection.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Méthodologie et Ingénierie}{2}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Architecture Logicielle et Outils}{2}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Le Débat Conceptuel : Grilles vs Particules}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}La Révolution Matérielle des Compute Shaders}{4}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}L'Érosion Thermique comme Nécessité Topologique}{4}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Modélisation de l'Écoulement : Du Continu au Discret}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Le "Graal" de la Physique : Les Équations de Navier-Stokes}{4}{subsection.3.1}\protected@file@percent }
 \citation{MDH07}
 \citation{MDH07}
 \citation{MDH07}
 \citation{MDH07}
 \citation{MDH07}
 \citation{MDH07}
-\citation{Jako11}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Génération Topographique et Importation}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Structures de Données GPU}{3}{subsection.3.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Représentation spatiale des variables d'état dans une cellule de la grille (d'après Mei et al. \cite  {MDH07}).}}{3}{figure.3}\protected@file@percent }
-\newlabel{fig:data_structure}{{3}{3}{Représentation spatiale des variables d'état dans une cellule de la grille (d'après Mei et al. \cite {MDH07})}{figure.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Le modèle des tuyaux virtuels gérant les échanges de flux bidimensionnels (d'après Mei et al. \cite  {MDH07}).}}{3}{figure.4}\protected@file@percent }
-\newlabel{fig:pipe_model}{{4}{3}{Le modèle des tuyaux virtuels gérant les échanges de flux bidimensionnels (d'après Mei et al. \cite {MDH07})}{figure.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Améliorations du Modèle de Mei : Apports de Jákó et Szirmay-Kalos}{3}{subsection.3.4}\protected@file@percent }
-\citation{Jako11}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Érosion Thermique Avancée : Dureté Locale et Voisinage de Moore}{4}{subsection.3.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Comparaison géométrique du modèle des tuyaux virtuels appliqué à l'écoulement d'eau (voisinage de von Neumann à 4 directions, flèche bleue) et à l'éboulement thermique des sédiments (voisinage de Moore à 8 directions, flèche rouge).}}{4}{figure.5}\protected@file@percent }
-\newlabel{fig:thermal_pipe_model}{{5}{4}{Comparaison géométrique du modèle des tuyaux virtuels appliqué à l'écoulement d'eau (voisinage de von Neumann à 4 directions, flèche bleue) et à l'éboulement thermique des sédiments (voisinage de Moore à 8 directions, flèche rouge)}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Mécanisme des tuyaux virtuels appliqué à l'érosion thermique. Les transferts de sédiments (flèches rouges) s'effectuent exclusivement vers les cellules voisines dont le dénivelé excède l'angle de talus local. À l'inverse, l'éboulement est mathématiquement inhibé (flèches jaunes) vers les zones considérées comme géologiquement stables.}}{4}{figure.6}\protected@file@percent }
-\newlabel{fig:thermal_exemple}{{6}{4}{Mécanisme des tuyaux virtuels appliqué à l'érosion thermique. Les transferts de sédiments (flèches rouges) s'effectuent exclusivement vers les cellules voisines dont le dénivelé excède l'angle de talus local. À l'inverse, l'éboulement est mathématiquement inhibé (flèches jaunes) vers les zones considérées comme géologiquement stables}{figure.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Stabilité Numérique et Condition CFL}{4}{subsection.3.6}\protected@file@percent }
 \citation{MDH07}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Implémentation du Pipeline et Gestion Mémoire}{5}{subsection.3.7}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Architecture du double tamponnage : les passes physiques écrivent dans le tampon temporaire (WRITE), tandis que les passes de post-traitement rapatrient l'état final dans le tampon principal (READ), sous la protection des barrières mémoire.}}{5}{figure.7}\protected@file@percent }
-\newlabel{fig:ping_pong}{{7}{5}{Architecture du double tamponnage : les passes physiques écrivent dans le tampon temporaire (WRITE), tandis que les passes de post-traitement rapatrient l'état final dans le tampon principal (READ), sous la protection des barrières mémoire}{figure.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Détails de l'Implémentation du Pipeline}{5}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{1. Incrémentation du niveau d'eau (\texttt  {water\_increment.glsl}) :}{5}{section*.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{2. Calcul des Flux par Tuyaux Virtuels (\texttt  {flux\_compute.glsl}) :}{5}{section*.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{3. Mise à Jour et Champ de Vélocité (\texttt  {water\_update.glsl}) :}{5}{section*.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{4. Érosion et Sédimentation Avancées (\texttt  {erosion\_deposition.glsl}) :}{5}{section*.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{5. Transport Sédimentaire par Advection (\texttt  {sediment\_transport.glsl}) :}{5}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}La Simplification des Eaux Peu Profondes (SWE)}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Le Modèle des Tuyaux Virtuels}{5}{subsection.3.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Représentation conceptuelle du modèle des tuyaux virtuels gérant les échanges de flux bidimensionnels \cite  {MDH07}.}}{5}{figure.2}\protected@file@percent }
+\newlabel{fig:pipe_model}{{2}{5}{Représentation conceptuelle du modèle des tuyaux virtuels gérant les échanges de flux bidimensionnels \cite {MDH07}}{figure.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Méthodologie et Ingénierie}{5}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Choix Technologiques et Architecture Logicielle}{5}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Génération Topographique et Importation}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Structures de Données et Stockage GPU}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Organisation des textures GPU et correspondance avec les variables physiques du modèle d'érosion \cite  {MDH07}.}}{5}{figure.3}\protected@file@percent }
+\newlabel{fig:data_structure}{{3}{5}{Organisation des textures GPU et correspondance avec les variables physiques du modèle d'érosion \cite {MDH07}}{figure.3}{}}
 \citation{MDH07}
 \citation{Jako11}
 \citation{Jako11}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Améliorations du Modèle de Mei : Apports de Jákó et Szirmay-Kalos}{6}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Érosion Thermique Avancée : Dureté Locale et Voisinage de Moore}{6}{subsection.4.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Comparaison géométrique du modèle des tuyaux virtuels appliqué à l'écoulement d'eau (voisinage de von Neumann à 4 directions, flèche bleue) et à l'éboulement thermique des sédiments (voisinage de Moore à 8 directions, flèche rouge).}}{6}{figure.4}\protected@file@percent }
+\newlabel{fig:thermal_pipe_model}{{4}{6}{Comparaison géométrique du modèle des tuyaux virtuels appliqué à l'écoulement d'eau (voisinage de von Neumann à 4 directions, flèche bleue) et à l'éboulement thermique des sédiments (voisinage de Moore à 8 directions, flèche rouge)}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Mécanisme des tuyaux virtuels appliqué à l'érosion thermique. Les transferts de sédiments (flèches rouges) s'effectuent exclusivement vers les cellules voisines dont le dénivelé excède l'angle de talus local. À l'inverse, l'éboulement est mathématiquement inhibé (flèches jaunes) vers les zones considérées comme géologiquement stables.}}{7}{figure.5}\protected@file@percent }
+\newlabel{fig:thermal_exemple}{{5}{7}{Mécanisme des tuyaux virtuels appliqué à l'érosion thermique. Les transferts de sédiments (flèches rouges) s'effectuent exclusivement vers les cellules voisines dont le dénivelé excède l'angle de talus local. À l'inverse, l'éboulement est mathématiquement inhibé (flèches jaunes) vers les zones considérées comme géologiquement stables}{figure.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Stabilité Numérique et Condition CFL}{7}{subsection.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Implémentation du Pipeline et Gestion Mémoire}{7}{subsection.4.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Architecture du double tamponnage : les passes physiques écrivent dans le tampon temporaire (WRITE), tandis que les passes de post-traitement rapatrient l'état final dans le tampon principal (READ), sous la protection des barrières mémoire.}}{7}{figure.6}\protected@file@percent }
+\newlabel{fig:ping_pong}{{6}{7}{Architecture du double tamponnage : les passes physiques écrivent dans le tampon temporaire (WRITE), tandis que les passes de post-traitement rapatrient l'état final dans le tampon principal (READ), sous la protection des barrières mémoire}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Le Pipeline de Rendu Graphique}{7}{subsection.4.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Déplacement des Sommets sur GPU (\textit  {Vertex Displacement}) :}{7}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Calcul des Normales à la Volée :}{7}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ombrage et Coloration Topographique (\textit  {Shading}) :}{7}{section*.7}\protected@file@percent }
+\citation{MDH07}
+\citation{Jako11}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Détails de l'Implémentation du Pipeline}{8}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{1. Apport Hydrique : Pluie et Sources (\texttt  {water\_increment.glsl}) :}{8}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{2. Calcul des Flux par Tuyaux Virtuels (\texttt  {flux\_compute.glsl}) :}{8}{section*.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{3. Mis à jour du niveau d'eau(\texttt  {water\_update.glsl}) :}{8}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{4. Érosion et Sédimentation Avancées (\texttt  {erosion\_deposition.glsl}) :}{8}{section*.11}\protected@file@percent }
+\citation{MDH07}
+\citation{Jako11}
+\@writefile{toc}{\contentsline {paragraph}{5. Transport Sédimentaire par Advection (\texttt  {sediment\_transport.glsl}) :}{9}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{6. Évaporation et Conditions aux Limites (\texttt  {evaporation.glsl}) :}{9}{section*.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{7. Évaluation de l'Instabilité Gravitationnelle (\texttt  {thermal\_flux.glsl}) :}{9}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{8. Synchronisation (\texttt  {thermal\_apply.glsl}) :}{9}{section*.15}\protected@file@percent }
+\citation{MDH07}
+\citation{Jako11}
+\citation{Jako11}
+\citation{MDH07}
+\citation{Jako11}
 \citation{MDH07}
 \citation{Jako11}
 \citation{MDH07}
 \citation{Jako11}
-\@writefile{toc}{\contentsline {paragraph}{6. Évaporation et Conditions aux Limites (\texttt  {evaporation.glsl}) :}{6}{section*.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{7. Calcul des Flux Thermiques (\texttt  {thermal\_flux.glsl}) :}{6}{section*.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{8. Application Thermique (\texttt  {thermal\_apply.glsl}) :}{6}{section*.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Limites Numériques et Conditions aux Frontières}{6}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Résultats et Évaluation}{6}{section.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite  {MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS).}}{6}{table.1}\protected@file@percent }
-\newlabel{tab:perf}{{1}{6}{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite {MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS)}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Limites Numériques et Conditions aux Frontières}{10}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Résultats et Évaluation}{10}{section.6}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite  {MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS).}}{10}{table.1}\protected@file@percent }
+\newlabel{tab:perf}{{1}{10}{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite {MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS)}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Interactivité et Découplage Temporel}{10}{subsection.6.1}\protected@file@percent }
 \citation{MDH07}
 \citation{Jako11}
 \citation{MDH07}
 \citation{SGG24}
 \citation{Jako11}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion et Analyse Critique}{11}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Biais Matériel et Goulets d'Étranglement}{11}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Validation Morphologique Qualitetive}{11}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Positionnement face à l'Industrie (Outils Hors-Ligne)}{11}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion et Perspectives}{11}{section.8}\protected@file@percent }
 \citation{Nilles24}
 \bibcite{MDH07}{1}
 \bibcite{Jako11}{2}
 \bibcite{SGG24}{3}
 \bibcite{Hartley24}{4}
 \bibcite{Nilles24}{5}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Interactivité et Découplage Temporel}{7}{subsection.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion et Perspectives}{7}{section.6}\protected@file@percent }
-\gdef \@abspage@last{7}
+\gdef \@abspage@last{13}
