@@ -26,6 +26,8 @@ const char *HEIGHTMAP_FILES[] = {
     "heightmaps/grand_canyon_heightmap.png",
     "heightmaps/nepal_mountain_range.png",
     "heightmaps/reunion.png",
+    "heightmaps/lac_titicaca.png",
+    "heightmaps/thermal_height.png",
 };
 
 std::string loadShaderSourceFromFile(const char *filepath)

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2026.3.24)  14 MAY 2026 12:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2026.3.24)  24 MAY 2026 11:41
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -326,33 +326,92 @@ LaTeX Info: Redefining \lslig on input line 902.
 Package microtype Info: Loading configuration file microtype.cfg.
  (/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.cfg
 File: microtype.cfg 2023/03/13 v3.1a microtype main configuration file (RS)
-)) (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+)) (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+ (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+)) (/usr/share/texlive/texmf-dist/tex/latex/stmaryrd/stmaryrd.sty
+Package: stmaryrd 1994/03/03 St Mary's Road symbol package
+\symstmry=\mathgroup6
+LaTeX Font Info:    Overwriting symbol font `stmry' in version `bold'
+(Font)                  U/stmry/m/n --> U/stmry/b/n on input line 89.
+) (/usr/share/texlive/texmf-dist/tex/latex/sttools/cuted.sty
+Package: cuted 2021/10/04 v2.0 Mixing onecolumn and twocolumn modes
+\At@ViperColsBreak=\toks30
+\preCutedStrip=\toks31
+\postCutedStrip=\toks32
+\cuted@@tempbox@a=\box56
+\cuted@@tempbox@c=\box57
+\cuted@@tempbox@var=\box58
+\hold@viper=\box59
+\@viper=\box60
+\cuted@@varbox@a=\box61
+\cuted@@varbox@c=\box62
+\cuted@@tempdim@spread=\dimen188
+\cuted@@tempdim@a=\dimen189
+\cuted@@tempdim@b=\dimen190
+\ht@hold@viper=\dimen191
+\ht@viper=\dimen192
+\var@@pagediscards@ht=\dimen193
+\stripsep=\skip55
+\viper@penalty=\count302
+) (/usr/share/texlive/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2023/03/12 v3.6j Customizing captions (AR)
+ (/usr/share/texlive/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2023/03/12 v2.4 caption3 kernel (AR)
+\caption@tempdima=\dimen194
+\captionmargin=\dimen195
+\caption@leftmargin=\dimen196
+\caption@rightmargin=\dimen197
+\caption@width=\dimen198
+\caption@indent=\dimen199
+\caption@parindent=\dimen256
+\caption@hangindent=\dimen257
+Package caption Info: Standard document class detected.
+Package caption Info: french babel package is loaded.
+)
+\c@caption@flags=\count303
+\c@continuedfloat=\count304
+Package caption Info: float package is loaded.
+Package caption Info: hyperref package is loaded.
+) (/usr/share/texlive/texmf-dist/tex/latex/caption/subcaption.sty
+Package: subcaption 2023/02/19 v1.6 Sub-captions (AR)
+Package caption Info: New subtype `subfigure' on input line 239.
+\c@subfigure=\count305
+Package caption Info: New subtype `subtable' on input line 239.
+\c@subtable=\count306
+) (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2023-01-16 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count302
-\l__pdf_internal_box=\box56
+\l__color_backend_stack_int=\count307
+\l__pdf_internal_box=\box63
 ) (./TER_CR.aux)
 \openout1 = `TER_CR.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 24.
-LaTeX Font Info:    ... okay on input line 24.
-LaTeX Info: Redefining \degres on input line 24.
-LaTeX Info: Redefining \up on input line 24.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Info: Redefining \degres on input line 29.
+LaTeX Info: Redefining \up on input line 29.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -390,53 +449,68 @@ LaTeX Info: Redefining \up on input line 24.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count303
-\scratchdimen=\dimen188
-\scratchbox=\box57
-\nofMPsegments=\count304
-\nofMParguments=\count305
-\everyMPshowfont=\toks30
-\MPscratchCnt=\count306
-\MPscratchDim=\dimen189
-\MPnumerator=\count307
-\makeMPintoPDFobject=\count308
-\everyMPtoPDFconversion=\toks31
+\scratchcounter=\count308
+\scratchdimen=\dimen258
+\scratchbox=\box64
+\nofMPsegments=\count309
+\nofMParguments=\count310
+\everyMPshowfont=\toks33
+\MPscratchCnt=\count311
+\MPscratchDim=\dimen259
+\MPnumerator=\count312
+\makeMPintoPDFobject=\count313
+\everyMPtoPDFconversion=\toks34
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
  (/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
-Package hyperref Info: Link coloring OFF on input line 24.
+Package hyperref Info: Link coloring OFF on input line 29.
  (./TER_CR.out) (./TER_CR.out)
 \@outlinefile=\write3
 \openout3 = `TER_CR.out'.
 
-LaTeX Info: Redefining \microtypecontext on input line 24.
-Package microtype Info: Applying patch `item' on input line 24.
-Package microtype Info: Applying patch `toc' on input line 24.
-Package microtype Info: Applying patch `eqnum' on input line 24.
-Package microtype Info: Applying patch `footnote' on input line 24.
-Package microtype Info: Applying patch `verbatim' on input line 24.
+LaTeX Info: Redefining \microtypecontext on input line 29.
+Package microtype Info: Applying patch `item' on input line 29.
+Package microtype Info: Applying patch `toc' on input line 29.
+Package microtype Info: Applying patch `eqnum' on input line 29.
+Package microtype Info: Applying patch `footnote' on input line 29.
+Package microtype Info: Applying patch `verbatim' on input line 29.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
 Package microtype Info: Automatic font expansion enabled (level 2),
 (microtype)             stretch: 20, shrink: 20, step: 1, non-selected.
 Package microtype Info: Using default expansion set `alltext-nott'.
-LaTeX Info: Redefining \showhyphens on input line 24.
+LaTeX Info: Redefining \showhyphens on input line 29.
 Package microtype Info: No adjustment of tracking.
 Package microtype Info: No adjustment of interword spacing.
 Package microtype Info: No adjustment of character kerning.
  (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman (RS)
 )
-<images/logoUM.png, id=124, 301.125pt x 110.4125pt>
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
+<images/logoUM.png, id=132, 301.125pt x 110.4125pt>
 File: images/logoUM.png Graphic file (type png)
 <use images/logoUM.png>
-Package pdftex.def Info: images/logoUM.png  used on input line 30.
+Package pdftex.def Info: images/logoUM.png  used on input line 35.
 (pdftex.def)             Requested size: 204.85672pt x 75.11656pt.
- [1
+LaTeX Font Info:    Trying to load font information for U+msa on input line 55.
+ (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+) (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msa.cfg
+File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 55.
+ (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+) (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
+File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
+)
+LaTeX Font Info:    Trying to load font information for U+stmry on input line 55.
+ (/usr/share/texlive/texmf-dist/tex/latex/stmaryrd/Ustmry.fd) [1
 
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc} <./images/logoUM.png>] (./TER_CR.toc)
@@ -447,11 +521,20 @@ Package pdftex.def Info: images/logoUM.png  used on input line 30.
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.64 \newpage
+l.69 \newpage
               [1
 
 
-] (./TER_CR.lof)
+] (./TER_CR.lof
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 7.
+ (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
+File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
+)
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `cmtt' (encoding: T1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+)
 \tf@lof=\write5
 \openout5 = `TER_CR.lof'.
 
@@ -460,152 +543,201 @@ l.64 \newpage
 \openout6 = `TER_CR.lot'.
 
  [2]
-<images/perlin_vs_erosion.png, id=218, 1927.2pt x 774.895pt>
+<images/resultat_global.png, id=244, 2569.6pt x 1104.125pt>
+File: images/resultat_global.png Graphic file (type png)
+<use images/resultat_global.png>
+Package pdftex.def Info: images/resultat_global.png  used on input line 78.
+(pdftex.def)             Requested size: 486.54057pt x 209.04463pt.
+
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 79.
+See the caption package documentation for explanation.
+
+CUTED [- LAST -]
+Extra skip:0.0pt
+Left:0.0pt/0.0pt
+Right:0.0pt/0.0pt
+Split: 0.0pt
+Output:0.0pt
+Pageshrink: 0.0pt
+Pagestretch: 0.0pt
+@colht:702.78308pt
+CUTED [output]: 0.0pt
+CUTED [leftcolumn badness]: 0
+CUTED [rightcolumn badness]: 0
+[3
+
+ <./images/resultat_global.png>]
+<images/perlin_vs_erosion.png, id=268, 1927.2pt x 774.895pt>
 File: images/perlin_vs_erosion.png Graphic file (type png)
 <use images/perlin_vs_erosion.png>
-Package pdftex.def Info: images/perlin_vs_erosion.png  used on input line 102.
+Package pdftex.def Info: images/perlin_vs_erosion.png  used on input line 130.
 (pdftex.def)             Requested size: 238.5203pt x 95.9039pt.
- [3
-
-
-pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.113 
-       <./images/perlin_vs_erosion.png>]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 119.
- (/usr/share/texlive/texmf-dist/tex/latex/base/t1cmtt.fd
-File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
-)
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `cmtt' (encoding: T1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
- [4]
-<images/pipe_model.png, id=246, 721.69624pt x 382.42876pt>
+<images/mei_result.png, id=270, 565.11125pt x 690.58pt>
+File: images/mei_result.png Graphic file (type png)
+<use images/mei_result.png>
+Package pdftex.def Info: images/mei_result.png  used on input line 142.
+(pdftex.def)             Requested size: 125.5374pt x 153.4033pt.
+ [4 <./images/perlin_vs_erosion.png>] [5 <./images/mei_result.png>]
+<images/pipe_model.png, id=297, 721.69624pt x 382.42876pt>
 File: images/pipe_model.png Graphic file (type png)
 <use images/pipe_model.png>
-Package pdftex.def Info: images/pipe_model.png  used on input line 159.
+Package pdftex.def Info: images/pipe_model.png  used on input line 219.
 (pdftex.def)             Requested size: 175.7516pt x 93.1269pt.
-<images/data_structure.png, id=250, 721.69624pt x 382.42876pt>
+ [6 <./images/pipe_model.png>] [7]
+<images/data_structure.png, id=327, 721.69624pt x 382.42876pt>
 File: images/data_structure.png Graphic file (type png)
 <use images/data_structure.png>
-Package pdftex.def Info: images/data_structure.png  used on input line 197.
+Package pdftex.def Info: images/data_structure.png  used on input line 284.
 (pdftex.def)             Requested size: 200.86061pt x 106.43742pt.
- [5
-pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.203 
-      
-pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.203 
-       <./images/pipe_model.png> <./images/data_structure.png>]
-<images/thermal.png, id=265, 768.8725pt x 575.14874pt>
-File: images/thermal.png Graphic file (type png)
-<use images/thermal.png>
-Package pdftex.def Info: images/thermal.png  used on input line 226.
-(pdftex.def)             Requested size: 150.64641pt x 112.6845pt.
-<images/pipes_thermal_erosion.png, id=266, 862.22125pt x 621.32124pt>
-File: images/pipes_thermal_erosion.png Graphic file (type png)
-<use images/pipes_thermal_erosion.png>
-Package pdftex.def Info: images/pipes_thermal_erosion.png  used on input line 237.
-(pdftex.def)             Requested size: 150.64641pt x 108.5527pt.
- [6
-pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.244 $$
-         \Delta t \le \frac{\Delta x}{v_{max}} $$ <./images/thermal.png>]
-<images/ping_pong.png, id=273, 1284.8pt x 722.7pt>
+ [8 <./images/data_structure.png>]
+<images/ping_pong.png, id=343, 1284.8pt x 722.7pt>
 File: images/ping_pong.png Graphic file (type png)
 <use images/ping_pong.png>
-Package pdftex.def Info: images/ping_pong.png  used on input line 256.
+Package pdftex.def Info: images/ping_pong.png  used on input line 322.
 (pdftex.def)             Requested size: 225.96579pt x 127.10295pt.
- [7
-pdfTeX warning (ext4): destination with the same identifier (name{figure.5}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.272 
-      
-pdfTeX warning (ext4): destination with the same identifier (name{figure.6}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.272 
-       <./images/pipes_thermal_erosion.png> <./images/ping_pong.png>]
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 280.
+<images/titicaca_erosion.png, id=346, 1923.185pt x 898.35625pt>
+File: images/titicaca_erosion.png Graphic file (type png)
+<use images/titicaca_erosion.png>
+Package pdftex.def Info: images/titicaca_erosion.png  used on input line 346.
+(pdftex.def)             Requested size: 238.5203pt x 111.41695pt.
+<images/thermal.png, id=348, 768.8725pt x 575.14874pt>
+File: images/thermal.png Graphic file (type png)
+<use images/thermal.png>
+Package pdftex.def Info: images/thermal.png  used on input line 358.
+(pdftex.def)             Requested size: 150.64641pt x 112.6845pt.
+ [9 <./images/ping_pong.png> <./images/titicaca_erosion.png>]
+<images/pipes_thermal_erosion.png, id=355, 862.22125pt x 621.32124pt>
+File: images/pipes_thermal_erosion.png Graphic file (type png)
+<use images/pipes_thermal_erosion.png>
+Package pdftex.def Info: images/pipes_thermal_erosion.png  used on input line 371.
+(pdftex.def)             Requested size: 150.64641pt x 108.5527pt.
+<images/comparaison_thermique.png, id=358, 1923.185pt x 626.34pt>
+File: images/comparaison_thermique.png Graphic file (type png)
+<use images/comparaison_thermique.png>
+Package pdftex.def Info: images/comparaison_thermique.png  used on input line 380.
+(pdftex.def)             Requested size: 238.5203pt x 77.68063pt.
+ [10 <./images/thermal.png> <./images/pipes_thermal_erosion.png> <./images/comparaison_thermique.png>]
+<images/alpes_francaises.png, id=369, 1039.885pt x 876.27374pt>
+File: images/alpes_francaises.png Graphic file (type png)
+<use images/alpes_francaises.png>
+Package pdftex.def Info: images/alpes_francaises.png  used on input line 435.
+(pdftex.def)             Requested size: 163.89162pt x 138.09406pt.
+<images/mouvement_eau.png, id=370, 1039.885pt x 876.27374pt>
+File: images/mouvement_eau.png Graphic file (type png)
+<use images/mouvement_eau.png>
+Package pdftex.def Info: images/mouvement_eau.png  used on input line 442.
+(pdftex.def)             Requested size: 163.89162pt x 138.09406pt.
+<images/courant_berge.png, id=371, 1039.885pt x 876.27374pt>
+File: images/courant_berge.png Graphic file (type png)
+<use images/courant_berge.png>
+Package pdftex.def Info: images/courant_berge.png  used on input line 449.
+(pdftex.def)             Requested size: 163.89162pt x 138.09406pt.
+<images/details_realiste.png, id=372, 1039.885pt x 876.27374pt>
+File: images/details_realiste.png Graphic file (type png)
+<use images/details_realiste.png>
+Package pdftex.def Info: images/details_realiste.png  used on input line 459.
+(pdftex.def)             Requested size: 163.89162pt x 138.09406pt.
+<images/vue_scientifique.png, id=373, 1039.885pt x 876.27374pt>
+File: images/vue_scientifique.png Graphic file (type png)
+<use images/vue_scientifique.png>
+Package pdftex.def Info: images/vue_scientifique.png  used on input line 466.
+(pdftex.def)             Requested size: 163.89162pt x 138.09406pt.
+<images/alpes_francaises_fin.png, id=374, 1039.885pt x 876.27374pt>
+File: images/alpes_francaises_fin.png Graphic file (type png)
+<use images/alpes_francaises_fin.png>
+Package pdftex.def Info: images/alpes_francaises_fin.png  used on input line 473.
+(pdftex.def)             Requested size: 163.89162pt x 138.09406pt.
+CUTED [- LAST -]
+Extra skip:0.0pt
+Left:265.0578pt/2.49939pt
+Right:260.4464pt/0.0pt
+Split: 263.75209pt
+Output:263.75209pt
+Pageshrink: 0.0pt
+Pagestretch: 0.0pt
+@colht:702.78308pt
+CUTED [output]: 263.75209pt
+CUTED [leftcolumn badness]: 3
+CUTED [rightcolumn badness]: 10
 
-Underfull \hbox (badness 10000) in paragraph at lines 280--281
+
+LaTeX Warning: Optional argument of \twocolumn too tall on page 11(1column).
+
+[11 <./images/alpes_francaises.png> <./images/mouvement_eau.png> <./images/courant_berge.png> <./images/details_realiste.png> <./images/vue_scientifique.png> <./images/alpes_francaises_fin.png>]
+<images/nepalUP.png, id=393, 2228.325pt x 1375.1375pt>
+File: images/nepalUP.png Graphic file (type png)
+<use images/nepalUP.png>
+Package pdftex.def Info: images/nepalUP.png  used on input line 510.
+(pdftex.def)             Requested size: 238.5203pt x 147.19492pt.
+ [12 <./images/nepalUP.png>]
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 563.
+
+Underfull \hbox (badness 10000) in paragraph at lines 563--564
  []\T1/cmr/bx/n/10 (+20) 1. Ap-port Hy-drique : Pluie et Sources
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 287--288
+Underfull \hbox (badness 10000) in paragraph at lines 570--571
  []\T1/cmr/bx/n/10 (+20) 2. Cal-cul des Flux par Tuyaux Vir-tuels
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 305--306
+[13]
+Underfull \hbox (badness 10000) in paragraph at lines 588--589
  []\T1/cmr/bx/n/10 (+20) 4. Éro-sion et Sé-di-men-ta-tion Avan-cées
  []
 
 
-Underfull \hbox (badness 2418) in paragraph at lines 305--306
+Underfull \hbox (badness 2418) in paragraph at lines 588--589
 \T1/cmr/bx/n/10 (+20) (\T1/cmtt/m/n/10 erosion_deposition.glsl\T1/cmr/bx/n/10 (+20) ) :[] \T1/cmr/m/n/10 (+20) Cette passe ré-git le
  []
 
-[8]
-Underfull \hbox (badness 10000) in paragraph at lines 313--314
+
+Underfull \hbox (badness 10000) in paragraph at lines 596--597
  []\T1/cmr/bx/n/10 (+20) 5. Trans-port Sé-di-men-taire par Ad-vec-tion
  []
 
 
-Underfull \hbox (badness 1048) in paragraph at lines 313--314
+Underfull \hbox (badness 1048) in paragraph at lines 596--597
 \T1/cmr/bx/n/10 (+20) (\T1/cmtt/m/n/10 sediment_transport.glsl\T1/cmr/bx/n/10 (+20) ) :[] \T1/cmr/m/n/10 (+20) Une fois ar-ra-chés au
  []
 
 
-Underfull \hbox (badness 6559) in paragraph at lines 323--324
+Underfull \hbox (badness 3386) in paragraph at lines 598--599
+[]\T1/cmr/m/n/10 (+20) Pour y par-ve-nir, la mé-thode d'ad-vec-tion \T1/cmr/bx/n/10 (+20) semi-
+ []
+
+
+Underfull \hbox (badness 6559) in paragraph at lines 606--607
  []\T1/cmr/bx/n/10 (+20) 6. Éva-po-ra-tion et Condi-tions aux Li-mites
  []
 
 
-Underfull \hbox (badness 1377) in paragraph at lines 330--331
+Underfull \hbox (badness 1377) in paragraph at lines 613--614
  []\T1/cmr/bx/n/10 (+20) 7. Éva-lua-tion de l'In-sta-bi-lité Gra-vi-ta-tion-nelle
  []
 
-[9]
-Underfull \hbox (badness 1931) in paragraph at lines 349--351
-[]\T1/cmr/m/n/10 (+20) Le pre-mier com-pro-mis ma-jeur concerne \T1/cmr/bx/n/10 (+20) la non-
- []
-
-[10
-pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has been already used, duplicate ignored
-<argument> ...shipout:D \box_use:N \l_shipout_box 
-                                                  \__shipout_drop_firstpage_...
-l.390 
-      ] [11] [12
+[14] [15
 
 ] (./TER_CR.aux)
 Package rerunfilecheck Info: File `TER_CR.out' has not changed.
-(rerunfilecheck)             Checksum: 8AF0CEE2196C519A108DE097F416EA08;8145.
+(rerunfilecheck)             Checksum: F66FC942AA6CBC7207908CD2B6EA3932;8764.
  ) 
 Here is how much of TeX's memory you used:
- 14082 strings out of 476041
- 224215 string characters out of 5793174
- 1872388 words of memory out of 6000000
- 34012 multiletter control sequences out of 15000+600000
- 534766 words of font info for 186 fonts, out of 8000000 for 9000
+ 16596 strings out of 476041
+ 267743 string characters out of 5793174
+ 1873388 words of memory out of 6000000
+ 36410 multiletter control sequences out of 15000+600000
+ 538346 words of font info for 210 fonts, out of 8000000 for 9000
  1137 hyphenation exceptions out of 8191
- 75i,9n,76p,1147b,569s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbi1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx2074.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1440.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on TER_CR.pdf (13 pages, 2100371 bytes).
+ 75i,9n,76p,1143b,587s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbi1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfbx2074.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfcc1440.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfit1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sfti1200.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb>
+Output written on TER_CR.pdf (16 pages, 16382046 bytes).
 PDF statistics:
- 434 PDF objects out of 1000 (max. 8388607)
- 360 compressed objects within 4 object streams
- 74 named destinations out of 1000 (max. 500000)
- 39700 words of extra memory for PDF output out of 42996 (max. 10000000)
+ 553 PDF objects out of 1000 (max. 8388607)
+ 447 compressed objects within 5 object streams
+ 102 named destinations out of 1000 (max. 500000)
+ 42331 words of extra memory for PDF output out of 42996 (max. 10000000)
 

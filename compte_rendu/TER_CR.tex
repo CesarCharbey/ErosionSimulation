@@ -10,6 +10,11 @@
 \usepackage{booktabs} 
 \usepackage{float}
 \usepackage{microtype}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{cuted}
+\usepackage{caption}
+\usepackage{subcaption}
 \raggedbottom
 \emergencystretch=1.5em
 
@@ -67,92 +72,147 @@
 \newpage
 \twocolumn
 
+
+\begin{strip}
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/resultat_global.png}
+    \captionof{figure}{Aperçu d'un terrain soumis à l'action couplée des simulations physiques d'érosion hydraulique et thermique développées dans ce travail.}
+    \label{fig:resultat_intro}
+\end{strip}
+
 % ----------------------------------------------------------------------------------------------------------------------------------------
-%Abstract
 \begin{abstract}
-    La génération procédurale de terrains virtuels réalistes nécessite la simulation de phénomènes physiques complexes s'étalant sur des temps géologiques. Ce document présente la conception et l'implémentation sur carte graphique (GPU), via la technologie des Compute Shaders, du modèle d'érosion hydraulique rapide initialement proposé par Mei et al. \cite{MDH07}. Afin de pallier le manque de détails géométriques inhérent à ces approches, tel que mis en évidence par Schott et al. \cite{SGG24}, nous avons étendu cette architecture en y intégrant une modélisation avancée de l'érosion thermique (éboulements gravitationnels), en nous appuyant sur les travaux de Jákó et Szirmay-Kalos \cite{Jako11}. Nos résultats démontrent qu'il est possible d'augmenter drastiquement le réalisme des pentes abruptes et la distribution sédimentaire, tout en maintenant des performances d'exécution colossales (avoisinant les 960 FPS), prouvant ainsi la viabilité de ce modèle couplé pour des applications interactives exigeantes.
+    La génération procédurale de terrains virtuels réalistes nécessite la simulation de phénomènes physiques complexes s'étalant sur des temps géologiques. Ce document présente la conception et l'implémentation sur carte graphique (GPU), via la technologie des Compute Shaders, du modèle d'érosion hydraulique initialement proposé par Mei et al. \cite{MDH07}. Afin de pallier le manque de détails géométriques inhérent à ces approches, tel que mis en évidence par Schott et al. \cite{SGG24}, nous avons étendu cette architecture en y intégrant une modélisation avancée de l'érosion thermique (éboulements gravitationnels), en nous appuyant sur les travaux de Jákó et Szirmay-Kalos \cite{Jako11}. Nos résultats démontrent qu'il est possible d'augmenter significativement le réalisme des pentes abruptes et la distribution sédimentaire, tout en maintenant des performances d'exécution élevées (avoisinant les 960 FPS), prouvant ainsi la viabilité de ce modèle couplé pour des applications interactives exigeantes.
 \end{abstract}
 
 % ----------------------------------------------------------------------------------------------------------------------------------------
-% Introduction
-\section{Introduction}
+% 1. Introduction
+\section{Introduction}\label{sec:intro}
 
-\subsection{Contexte et Enjeux Industriels}
-Dans l'industrie contemporaine du divertissement numérique qu'il s'agisse du jeu vidéo "Triple A", de la réalité virtuelle ou des effets spéciaux cinématographiques la création de mondes ouverts (\textit{Open Worlds}) d'un réalisme saisissant est devenue une exigence fondamentale. L'immersion de l'utilisateur repose en grande partie sur la cohérence visuelle et géologique du terrain. Cependant, sculpter manuellement des environnements de plusieurs dizaines de kilomètres carrés est une tâche titanesque pour les artistes.
+La représentation et la modélisation numérique de terrains virtuels reposent fondamentalement sur la simulation de phénomènes physiques. Afin de sculpter numériquement des environnements organiques tels que celui présenté en Figure \ref{fig:resultat_intro}, les approches contemporaines calculent l'écoulement hydraulique continu directement sur une grille discrète codant les altitudes successives du terrain.
 
-C'est ici qu'intervient la génération procédurale, complétée par la simulation physique. Des outils professionnels tels que \textit{Gaea} ou \textit{World Machine} ont prouvé l'utilité de l'érosion pour transformer des bruits mathématiques abstraits en paysages crédibles. Néanmoins, ces solutions reposent souvent sur des calculs hors-ligne (\textit{offline}), brisant le flux créatif des concepteurs.
+\subsection{Contexte et Enjeux Industriels}\label{subsec:contexte}
+Dans l'industrie du divertissement numérique englobant le jeu vidéo, la réalité virtuelle et les effets spéciaux, la production de mondes ouverts (\textit{Open Worlds}) nécessite la génération de reliefs cohérents d'un point de vue géologique. La modélisation manuelle d'environnements de plusieurs dizaines de kilomètres carrés représentant une charge de travail conséquente pour les artistes, la production logicielle s'oriente vers la génération procédurale couplée à la simulation physique.
 
-\subsection{La Problématique de l'Érosion en Temps Réel}
-L'apparence organique des chaînes de montagnes, des lits de rivières et des vallées est le résultat de millénaires d'interactions entre les précipitations atmosphériques et la croûte terrestre. Les mouvements d'eau sculptent ces terrains par des processus couplés de dissolution mécanique, de transport hydrodynamique de matière en suspension, et de sédimentation.
+Des applications industrielles telles que \textit{World Machine} \cite{WorldMachine} ou \textit{Gaea} \cite{Gaea} exploitent des algorithmes d'érosion pour transformer des bruits mathématiques abstraits en structures topographiques réalistes. Néanmoins, ces solutions reposent principalement sur des calculs hors-ligne (\textit{offline}). Cette déconnexion temporelle exclut tout ajustement dynamique immédiat des paramètres par l'utilisateur lors des phases de conception, figeant le processus itératif de création.
 
+\subsection{La Problématique de l'Érosion en Temps Réel}\label{subsec:problematique}
+L'aspect organique des massifs montagneux et des réseaux hydrographiques résulte d'interactions dynamiques continues entre les précipitations atmosphériques et le substrat terrestre. D'un point de vue macroscopique, ces processus associent la cinématique de l'écoulement fluide au transfert de masse sédimentaire. Le transport de la concentration de sédiments en suspension $s$ (exprimée en volume de matière par unité de surface) par un champ de vitesse hydrodynamique bidimensionnel $\vec{v} = (u, v)$ est régi par la loi de conservation de la masse, formalisée sous la forme d'une équation d'advection-diffusion :
+\begin{equation}
+    \frac{\partial s}{\partial t} + \nabla \cdot (s \vec{v}) = \sigma
+\end{equation}
 
+Dans cette formulation, le terme différentiel $\frac{\partial s}{\partial t}$ désigne la variation temporelle locale de la quantité de sédiments en mouvement. Le terme de divergence $\nabla \cdot (s \vec{v})$ modélise géométriquement le flux net de sédiments transportés par le courant à travers les frontières d'une cellule.
 
-Si les méthodes basées sur la mécanique des fluides offrent une fidélité physique incontestable, elles ont historiquement souffert de temps de calcul élevés. Le défi de ce projet de TER est de concevoir une solution capable de simuler ces cycles géologiques complexes en quelques millisecondes.
+Le membre de droite, représenté par le terme source-puits $\sigma$, quantifie le bilan net du transfert de matière par unité de temps entre le fluide et le relief rocheux sous-jacent. Ce terme gouverne le couplage direct entre l'hydrologie et la topographie selon deux régimes distincts :
+\begin{itemize}
+    \item \textbf{Régime de sous-saturation ($\sigma > 0$) :} Lorsque la charge sédimentaire actuelle $s$ est inférieure à la capacité de charge maximale du fluide $C$ ($s < C$), une fraction du substrat rocheux est désintégrée mécaniquement et arrachée par le courant, ce qui augmente $s$ et abaisse l'altitude du terrain.
+    \item \textbf{Régime de sur-saturation ($\sigma < 0$) :} À l'inverse, si la charge sédimentaire dépasse cette capacité critique ($s > C$), le surplus de matière se dépose sur le sol (sédimentation), ce qui diminue $s$ et élève l'altitude locale du relief.
+\end{itemize}
 
-En nous appuyant sur l'accélération matérielle des Compute Shaders et sur les travaux de Mei et al. \cite{MDH07} et Jákó et al. \cite{Jako11}, nous visons à offrir un laboratoire géomorphologique interactif. Ce dernier ne doit pas seulement être rapide, mais aussi physiquement cohérent, intégrant l'instabilité thermique des sols pour garantir la formation naturelle d'éboulis et de talus.
+La capacité de transport théorique $C$ est elle-même modélisée comme une fonction dépendant de la magnitude de la vitesse $|\vec{v}|$ et de la pente locale du terrain. Ce formalisme engendre un système d'équations différentielles non linéaires, dont la résolution numérique stable sur processeur graphique (GPU) constitue l'objectif central de ce projet.
+
+L'importance de résoudre ce problème en temps réel est double. D'une part, sur le plan de la production de contenu, l'interactivité permet aux concepteurs d'observer instantanément les répercussions morphologiques de la modification d'un paramètre physique (gravité, érodabilité, intensité des pluies). D'autre part, sur le plan applicatif, l'intégration de ces modèles à des fréquences d'exécution élevées ouvre la voie à des environnements dynamiques évoluant en temps réel sous l'action directe de l'utilisateur ou d'événements climatiques simulés.
+
+Le défi de ce projet de Travail d'Étude et de Recherche (TER) consiste à concevoir et implémenter une architecture logicielle capable de résoudre ces cycles géologiques complexes en quelques millisecondes, surmontant le coût computationnel élevé qui caractérise historiquement les schémas complets issus de la mécanique des fluides. En exploitant le parallélisme matériel des Compute Shaders sous l'API OpenGL et en transposant les modèles d'érosion hydraulique de Mei et al. \cite{MDH07} ainsi que les extensions d'érosion thermique de Jákó et al. \cite{Jako11}, ce travail formalise le développement d'un système d'érosion interactif.
 
 % ----------------------------------------------------------------------------------------------------------------------------------------
-% Etat de l'art
-\section{État de l'Art et Positionnement}
+% 2. Etat de l'art
+\section{État de l'Art}\label{sec:etat_art}
 
-La génération de terrains s'est d'abord appuyée sur des approches purement mathématiques, basées sur la superposition de bruits pseudo-aléatoires (bruit de Perlin, Simplex, ou fractales). Si ces algorithmes garantissent une exécution quasi-instantanée et une empreinte mémoire minimale, ils souffrent d'une lacune conceptuelle majeure : un manque inhérent de cohérence géologique. Les paysages ainsi générés sont uniformément vallonnés et fondamentalement dénués de réseaux de drainage, de crêtes acérées ou de dépôt sédimentaire.
+La création d'environnements virtuels organiques et géologiquement cohérents, tels que le relief synthétisé en Figure \ref{fig:resultat_intro}, repose fondamentalement sur la simulation de processus physiques naturels. Pour sculpter numériquement ces paysages, la géomorphologie informatique s'attache à reproduire l'action de l'eau et de la gravité sur la croûte terrestre. Bien qu'il existe aujourd'hui une diversité d'approches et de structures de données pour résoudre ces systèmes, le maintien d'une fréquence d'exécution interactive impose des compromis algorithmiques stricts.
+
+\subsection{Synthèse Procédurale par Fonctions de Bruit}\label{subsec:bruit}
+Le bruit procédural englobant le bruit de Perlin ou le mouvement brownien fractionnaire (FBM) permet de créer des terrains visuellement vraisemblables en temps réel. Cette approche offre l'avantage d'une exécution rapide et d'une empreinte mémoire minimale. Toutefois, ces représentations purement mathématiques s'opèrent sans réelle cohérence géologique. Les reliefs ainsi synthétisés présentent un aspect uniformément vallonné et sont structurellement dépourvus de réseaux de drainage naturels, de crêtes acérées ou de plaines de dépôt sédimentaire cohérentes.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\linewidth]{images/perlin_vs_erosion.png}
-    \caption{Comparaison entre une génération procédurale classique par bruit de Perlin (gauche) et un terrain soumis aux forces d'érosion (droite).}
+    \caption{Comparaison morphologique entre un relief initial généré par bruit procédural (gauche) et un terrain restructuré par simulation d'érosion (droite).}
     \label{fig:perlin_vs_erosion}
 \end{figure}
 
-Pour insuffler ce réalisme, la recherche s'est orientée vers la simulation des processus d'érosion, posant un défi computationnel de taille.
+Pour introduire cette cohérence structurelle, les recherches se sont tournées vers la simulation numérique des lois de la physique. L'état de l'art se divise alors selon deux paradigmes fondamentaux de description des milieux continus : le paradigme Eulérien, s'appuyant sur une grille discrète fixe, et le paradigme Lagrangien, reposant sur un système de particules mobiles.
 
-\subsection{Érosion Hydraulique : Le Paradigme Eulérien}
-En 2007, Mei, Decaudin et Hu \cite{MDH07} ont démontré qu'il était possible de simuler l'érosion hydraulique à des fréquences d'affichage interactives. Au lieu de s'engager dans la résolution tridimensionnelle extrêmement lourde des équations de Navier-Stokes, leur modèle exploite une simplification bidimensionnelle : les équations en eaux peu profondes (\textit{Shallow Water Equations}).
+\subsection{L'Érosion Hydraulique sous le Paradigme Eulérien}\label{subsec:eulerien}
+En 2007, Mei, Decaudin et Hu \cite{MDH07} ont démontré la faisabilité d'une simulation d'érosion hydraulique à des fréquences d'affichage interactives.
 
-Leur approche s'inscrit dans un paradigme \textbf{Eulérien} : l'espace est modélisé sous la forme d'une grille discrète et immuable. Chaque cellule de cette matrice maintient et met à jour un état physique local (hauteur de la roche, hauteur de la colonne d'eau, vélocité du flux, quantité de sédiments). L'écoulement hydrique y est évalué via le "modèle des tuyaux virtuels" (\textit{Virtual Pipe Model}), qui calcule l'accélération de l'eau générée par la différence de pression hydrostatique entre cellules adjacentes. Le transport de la masse sédimentaire est ensuite résolu par advection semi-Lagrangienne rétrograde, garantissant une stabilité inconditionnelle face aux problèmes de divergence numérique.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/mei_result.png}
+    \caption{Résultat de l'érosion hydraulique interactive obtenue par le modèle de Mei et al. \cite{MDH07} sur architecture matérielle de 2007.}
+    \label{fig:mei_results}
+\end{figure}
 
-\subsection{Le Débat Conceptuel : Grilles vs Particules}
-L'état de l'art oppose fréquemment ce paradigme Eulérien aux approches \textbf{Lagrangiennes} (systèmes de particules ou \textit{droplet-based erosion}), récemment perfectionnées par Hartley et al. \cite{Hartley24}. Bien que la méthode particulaire excelle visuellement dans le tracé organique de micro-incisions et de ravines abruptes, elle se heurte à des limites matérielles sévères lors de son exécution sur des architectures massivement parallèles (GPU), notamment en raison des conditions de course (\textit{Race Conditions}).
+Pour contourner la résolution tridimensionnelle complète des équations de Navier-Stokes (détaillée en Section \ref{subsec:navier_stokes}), leur modèle exploite une simplification bidimensionnelle rigoureuse : les équations en eaux peu profondes (\textit{Shallow Water Equations}), abordées en Section \ref{subsec:swe}.
 
-Dans un modèle Lagrangien, la gravité et la topographie forcent naturellement des milliers de particules virtuelles à converger vers les mêmes vallées ou lits de rivières. Sur le plan matériel, cela se traduit par de multiples \textit{threads} concurrents tentant de modifier simultanément la même adresse mémoire (la hauteur d'une cellule spécifique).
+Cette approche s'inscrit pleinement dans le cadre d'une description Eulérienne. L'espace est discrétisé sous la forme d'une matrice régulière de cellules. Chaque point de la grille maintient et met à jour un ensemble de variables d'état locales (hauteur du substrat rocheux, épaisseur de la colonne d'eau, vecteur vitesse du fluide et concentration de sédiments). L'écoulement hydrique est résolu via le modèle des tuyaux virtuels (\textit{Virtual Pipe Model}, voir Section \ref{subsec:tuyaux_theorie}), qui calcule le débit entre cellules adjacentes à partir de la différence de pression hydrostatique.
 
-Afin d'éviter la corruption des données, la résolution de ces conflits exige l'utilisation d'opérations atomiques (\textit{Atomic Operations} ou \texttt{InterlockedAdd}). Cependant, cette contrainte sérialise localement l'exécution, provoque des conflits d'accès au cache L2 (\textit{cache thrashing}), et anéantit les bénéfices de performance offerts par le parallélisme massif du GPU.
+Le transport de la charge sédimentaire d'une cellule à l'autre est résolu par une méthode d'advection semi-Lagrangienne rétrograde. Cette technique consiste à déterminer la valeur d'une propriété en un point de la grille à l'instant courant en calculant sa position d'origine à l'instant précédent, obtenue en remontant le vecteur vitesse du fluide à contre-courant. Ce choix algorithmique garantit une stabilité numérique élevée face aux courants rapides.
 
-À l'inverse, l'approche Eulérienne, bien que soumise à des artefacts d'advection sur les pentes raides, garantit un schéma d'accès mémoire déterministe et spatialement cohérent (un \textit{thread} = une cellule lue/écrite). Cette garantie de performance et de stabilité justifie pleinement le choix de ce socle algorithmique pour notre implémentation temps réel.
-\subsection{La Révolution Matérielle des Compute Shaders}
-L'implémentation originelle de Mei \cite{MDH07} était bridée par les limitations matérielles de son époque. L'utilisation contrainte des Fragment Shaders imposait un détournement lourd du pipeline de rastérisation : nécessité de générer de la géométrie fictive, paquetage artificiel des données physiques dans les canaux RGBA, et redondance désastreuse des accès à la mémoire vidéo globale (\textit{VRAM}).
+\subsection{L'Érosion Hydraulique sous le Paradigme Lagrangien}\label{subsec:lagrangien}
+Le paradigme Eulérien s'oppose aux approches Lagrangiennes, récemment perfectionnées par Hartley et al. \cite{Hartley24}. Dans ces modèles, la masse d'eau est discrétisée en un système de particules indépendantes qui se déplacent sur le relief et altèrent la topographie le long de leur trajectoire.
 
-Notre projet tire pleinement parti de la transition architecturale vers les \textbf{Compute Shaders} (introduits avec OpenGL 4.3). Cette technologie s'affranchit du pipeline graphique traditionnel. Les données sont structurées dans des textures ou des \textit{Shader Storage Buffer Objects} (SSBO) accessibles directement en lecture et écriture (\texttt{imageLoad}/\texttt{imageStore}). Bien que la technique du double tamponnage (\textit{ping-pong}) reste indispensable pour figer l'état $t$ lors du calcul de l'état $t+1$, les Compute Shaders permettent l'exploitation de la Mémoire Partagée locale (\textit{Shared Memory}) au sein des \textit{Workgroups}. Ce cache ultra-rapide limite les requêtes redondantes vers la VRAM, déplaçant le goulot d'étranglement de la bande passante vers la capacité de calcul pur de la puce.
+La méthode particulaire excelle dans le tracé organique de micro-incisions et de ravines abruptes. Cependant, son exécution sur des architectures massivement parallèles (GPU) se heurte à d'importantes contraintes matérielles liées aux conditions de course (\textit{Race Conditions}). Sous l'action de la gravité, les particules convergent naturellement vers les mêmes lits de rivières. Sur le plan matériel, cela implique que de multiples fils de calcul (\textit{threads}) concurrents tentent de modifier simultanément la même adresse mémoire pour mettre à jour l'altitude du sol.
 
-\subsection{L'Érosion Thermique comme Nécessité Topologique}
-Si le modèle hydraulique creuse des lits de rivières convaincants, il engendre un artefact visuel majeur : l'apparition de falaises parfaitement verticales au bord des flux d'eau, des structures géologiquement instables. Schott et al. \cite{SGG24} soulignent que ces approches manquent de précision et requièrent des processus d'amplification.
-
-Pour répondre à cette problématique, Jákó et Szirmay-Kalos \cite{Jako11} ont mis en évidence la nécessité de coupler l'hydraulique à un modèle d'\textbf{érosion thermique}. Ce processus physique complémentaire simule l'effondrement gravitationnel, le détachement de la roche et la formation d'éboulis dès lors que l'inclinaison locale dépasse l'angle de repos spécifique au matériau.
+Pour prévenir la corruption des données, l'utilisation d'opérations matérielles atomiques (\texttt{InterlockedAdd}) devient indispensable. Cette exigence sérialise localement les calculs, génère des conflits d'accès au niveau des caches de la carte graphique et limite l'efficacité globale du parallélisme. À l'inverse, l'approche Eulérienne assure un schéma d'accès à la mémoire déterministe et régulier où chaque cellule est assignée à un fil de calcul unique.
 
 % ----------------------------------------------------------------------------------------------------------------------------------------
-% Explication des modèles mathématiques et physiques
-\section{Modélisation de l'Écoulement : Du Continu au Discret}
+% 3. Fondements Théoriques et Modélisation
+\section{Fondements Théoriques et Modélisation}\label{sec:theorie}
 
-La simulation de l'érosion repose sur une compréhension précise du mouvement de l'eau. Dans cette section, nous détaillons le passage de la physique théorique "idéale" aux modèles algorithmiques simplifiés nécessaires au temps réel.
+La simulation des processus d'érosion repose sur une description physique rigoureuse de la dynamique des fluides et des transferts particulaires. Cette section détaille les simplifications théoriques permettant de passer des équations continues de la mécanique des milieux continus à des modèles algorithmiques discrets compatibles avec les contraintes d'exécution en temps réel.
 
-\subsection{Le "Graal" de la Physique : Les Équations de Navier-Stokes}
-En mécanique des fluides, le modèle de référence absolu est constitué par les \textbf{équations de Navier-Stokes}. Ces équations aux dérivées partielles décrivent comment la vitesse, la pression et la viscosité d'un fluide évoluent dans un espace tridimensionnel.
-
-Mathématiquement, elles garantissent la conservation de la masse et du moment. Cependant, leur résolution en informatique graphique pose trois défis majeurs qui les rendent incompatibles avec le temps réel :
+\subsection{Limites de la Modélisation Tridimensionnelle de Navier-Stokes}\label{subsec:navier_stokes}
+En mécanique des fluides, la description de référence pour un fluide visqueux et incompressible repose sur les \textbf{équations de Navier-Stokes}. Ces équations aux dérivées partielles modélisent de manière couplée l'évolution spatio-temporelle du champ de vitesse tridimensionnel, de la pression et des forces de viscosité. Bien qu'elles garantissent analytiquement la conservation de la masse et de la quantité de mouvement, leur résolution numérique directe soulève des blocages technologiques majeurs en informatique graphique temps réel :
 
 \begin{enumerate}
-    \item \textbf{Complexité Volumique :} Pour simuler une rivière de manière réaliste, il faudrait diviser l'espace en une grille 3D. Une résolution de $1024 \times 1024$ sur seulement 100 unités de hauteur représenterait plus de 100 millions de cellules à traiter à chaque milliseconde.
-    \item \textbf{Le Solveur de Pression :} Navier-Stokes nécessite la résolution d'une équation de Poisson pour garantir que le fluide est "incompressible" (qu'il ne s'écrase pas sur lui-même). Ce calcul est itératif et extrêmement coûteux en ressources GPU.
-    \item \textbf{Instabilité Temporelle :} Pour éviter que la simulation n'explose numériquement, le pas de temps ($\Delta t$) doit être infinitésimal, ce qui interdit toute accélération du temps géologique.
+    \item \textbf{Complexité volumique tridimensionnelle} : La discrétisation fine d'un écoulement fluide ouvert requiert un maillage en trois dimensions. À titre d'exemple, une grille régulière de résolution standard $1024 \times 1024$ restreinte à seulement 100 unités de hauteur engendre le calcul et la mise à jour de plus de 100 millions de cellules à chaque pas de temps, dépassant les capacités de traitement et d'accès mémoire instantanés du matériel grand public.
+    \item \textbf{Coût computationnel du solveur de pression} : Le maintien de la condition d'incompressibilité impose la résolution à chaque frame d'une équation de Poisson pour le champ de pression. Cette étape nécessite l'utilisation de solveurs itératifs lourds, dont le temps de convergence est difficilement conciliable avec une fréquence d'affichage interactive.
+    \item \textbf{Contraintes de pas de temps infinitésimaux} : Pour prévenir l'explosion et la divergence numérique des schémas d'intégration explicites tridimensionnels, le pas de temps ($\Delta t$) doit être contraint à des valeurs microscopiques, empêchant toute accélération temporelle indispensable à l'observation de phénomènes à échelle géologique.
 \end{enumerate}
 
-\subsection{La Simplification des Eaux Peu Profondes (SWE)}
-Pour atteindre des performances interactives, nous utilisons une version simplifiée : les \textbf{Shallow Water Equations} (SWE). L'hypothèse fondamentale est la suivante : la dimension horizontale du fluide (la largeur de la rivière) est bien plus grande que sa profondeur.
+\subsection{L'Approximation des Eaux Peu Profondes (SWE)}\label{subsec:swe}
+Afin de lever ces limitations computationnelles, ce projet s'appuie sur le choix de modélisation introduit par Mei et al. \cite{MDH07}, consistant à exploiter une simplification bidimensionnelle de la mécanique des fluides : les équations en eaux peu profondes, ou \textbf{Shallow Water Equations} (SWE). Ce modèle repose sur l'hypothèse physique que la dimension horizontale du domaine d'écoulement (l'échelle du relief) est largement supérieure à sa dimension verticale (la profondeur de la lame d'eau).
 
-Cette hypothèse permet de négliger la vitesse verticale de l'eau. On passe alors d'un volume 3D complexe à un \textbf{champ de hauteurs 2D}. Le fluide n'est plus un nuage de points dans l'espace, mais une simple valeur de profondeur $d(x,y)$ posée sur chaque cellule de notre grille topographique. C'est cette réduction de dimension (de la 3D à la 2.5D) qui libère la puissance de calcul nécessaire pour atteindre 960 FPS \cite{MDH07}.
+C'est un système de deux équations différentielles partielles couplées exprimant chacune un grand principe de conservation physique :
 
-\subsection{Le Modèle des Tuyaux Virtuels}
-Pour discrétiser ces équations sur GPU, nous utilisons le modèle des \textbf{tuyaux virtuels} de Mei et al. \cite{MDH07}. Chaque cellule est vue comme un réservoir relié à ses voisins par des conduits. La différence de hauteur totale (roche $b$ + eau $d$) crée une pression hydrostatique $\Delta h$ qui génère un flux $f$.
+\paragraph{1. La Conservation de la Masse (\ref{eq:swe_masse}) :}
+La première équation régit l'évolution quantitative du volume d'eau en chaque point du domaine au cours du temps :
+\begin{equation}\label{eq:swe_masse}
+    \frac{\partial d}{\partial t} + \nabla \cdot (d \vec{v}) = r - K_e
+\end{equation}
+\begin{itemize}
+    \item $\frac{\partial d}{\partial t}$ désigne la variation temporelle locale de la hauteur d'eau.
+    \item $\nabla \cdot (d \vec{v})$ représente la divergence du débit horizontal, modélisant le flux net de fluide qui entre ou sort latéralement d'une colonne d'eau par advection.
+    \item $r - K_e$ constitue le bilan des apports et pertes externes directs, associant le taux de précipitations $r$ (terme source) au taux d'évaporation $K_e$ (terme puits).
+\end{itemize}
+
+\paragraph{2. La Conservation de la Quantité de Mouvement (\ref{eq:swe_mouvement}) :}
+La seconde équation dérive de la deuxième loi de Newton appliquée à un milieu fluide permanent. Elle décrit l'équilibre des forces qui accélèrent ou décélèrent l'écoulement horizontal :
+\begin{equation}\label{eq:swe_mouvement}
+    \frac{\partial (d \vec{v})}{\partial t} + \nabla \cdot (d \vec{v} \otimes \vec{v}) + g d \nabla(b+d) = -\vec{\tau}_f
+\end{equation}
+\begin{itemize}
+    \item $\frac{\partial (d \vec{v})}{\partial t}$ traduit la variation temporelle de la quantité de mouvement (ou flux de débit) locale.
+    \item $\nabla \cdot (d \vec{v} \otimes \vec{v})$ modélise l'inertie du fluide, c'est-à-dire le transport de la quantité de mouvement par l'écoulement lui-même (où $\otimes$ désigne le produit tensoriel des vecteurs de vitesse).
+    \item $g d \nabla(b+d)$ exprime la force motrice gravitationnelle engendrée par le gradient de la surface libre du fluide. L'eau est accélérée des zones de haute altitude totale ($b+d$) vers les zones dépressionnaires, combinant l'effet de la pente du terrain $b$ et les variations de la hauteur d'eau $d$.
+    \item $-\vec{\tau}_f$ désigne le vecteur des forces de friction visqueuse s'opposant au mouvement, provoqué par le frottement du fluide contre la rugosité du substrat rocheux.
+\end{itemize}
+
+Cette formulation couplée lie ainsi continuellement la hauteur de la lame d'eau à sa dynamique cinématique. Cette réduction dimensionnelle fait basculer le système d'une description volumique tridimensionnelle à un champ bidimensionnel en 2.5D, réduisant significativement la quantité d'informations à traiter par maille lors de la phase de discrétisation numérique \cite{MDH07}.
+\subsection{Formalisation de la Grille Discrète}\label{subsec:grille_discrete}
+Pour résoudre numériquement ce système d'équations sur GPU, l'espace bidimensionnel est discrétisé sous la forme d'une grille régulière de dimensions $N \times N$ mailles. D'un point de vue mathématique, la topographie et la couche hydrique sont modélisées par des fonctions discrètes associant à chaque coordonnée entière $(i, j) \in \llbracket 0, N-1 \rrbracket^2$ un ensemble de hauteurs réelles :
+\begin{equation}\label{eq:mapping_grille}
+    (i, j) \mapsto \begin{pmatrix} b_{i,j} \\ d_{i,j} \end{pmatrix} \in \mathbb{R} \times \mathbb{R}^+
+\end{equation}
+Chaque cellule élémentaire s'apparente ainsi à un réservoir vertical de section constante $\Delta x \times \Delta y$, stockant une altitude de roche $b_{i,j}$ et un volume d'eau local représenté par l'épaisseur scalaire $d_{i,j}$.
+
+\subsection{Le Modèle des Tuyaux Virtuels}\label{subsec:tuyaux_theorie}
+La discrétisation spatio-temporelle de l'équation de transport de quantité de mouvement (\ref{eq:swe_mouvement}) s'opère au moyen du modèle des \textbf{tuyaux virtuels} introduit par Mei et al. \cite{MDH07}. Chaque cellule de coordonnées $(i,j)$ communique avec ses quatre voisins cardinaux directs (voisinage de von Neumann) par des conduits de communication virtuels. La force motrice du fluide dépend exclusivement de la différence entre les altitudes totales des surfaces libres, générant une pression hydrostatique différentielle :
+\begin{equation}\label{eq:pression_h}
+    \Delta h = (b_{local} + d_{local}) - (b_{voisin} + d_{voisin})
+\end{equation}
 
 \begin{figure}[htbp]
     \centering
@@ -161,35 +221,62 @@ Pour discrétiser ces équations sur GPU, nous utilisons le modèle des \textbf{
     \label{fig:pipe_model}
 \end{figure}
 
-Le débit sortant vers un voisin est calculé par l'accélération gravitationnelle :
-$$ f_{t+\Delta t} = \max \left(0, f_t + \Delta t \cdot A \cdot \frac{g \cdot \Delta h}{l} \right) $$
-où $g$ est la gravité, $A$ la largeur du tuyau et $l$ sa longueur. Pour garantir la \textbf{conservation de la masse} et éviter l'apparition d'eau "négative", un facteur de mise à l'échelle $K$ est calculé localement : si la somme des flux sortants excède le volume d'eau de la cellule, les flux sont pondérés uniformément pour ne vider que le volume réel disponible.
+Le débit sortant $f$ transitant à travers un conduit virtuel vers une cellule adjacente est déterminé par l'intégration explicite de l'accélération gravitationnelle sur le pas de temps $\Delta t$ :
+\begin{equation}\label{eq:calcul_flux}
+    f_{t+\Delta t} = \max \left(0, f_t + \Delta t \cdot A \cdot \frac{g \cdot \Delta h}{l} \right)
+\end{equation}
+où $g$ représente l'accélération de la pesanteur, $A$ désigne la section transversale du canal virtuel et $l$ correspond à sa longueur caractéristique (distance inter-cellulaire). L'opérateur $\max(0, \cdot)$ assure le caractère strictement positif et unidirectionnel du flux calculé, empêchant le fluide de remonter le conduit à contre-courant.
+
+Pour assurer le respect rigoureux de la loi physique de \textbf{conservation de la masse} et proscrire l'apparition de hauteurs d'eau négatives, un facteur de correction scalaire $K$ est évalué dynamiquement à chaque itération. Si la somme des flux sortants calculée excède le volume d'eau instantanément disponible au sein de la cellule ($d_{local} \cdot \Delta x \cdot \Delta y$), les quatre vecteurs de débit sortant sont réduits de manière homothétique afin de saturer exactement le volume réel exploitable.
 
 % ----------------------------------------------------------------------------------------------------------------------------------------
-% Modèle de base
-\section{Méthodologie et Ingénierie}
+% ========================================================================================================================================
+% 4. Technologies utilisées
+\section{Technologies Utilisées}\label{sec:technologies}
 
-\subsection{Choix Technologiques et Architecture Logicielle}
-Pour garantir des performances optimales et un déploiement robuste, le cœur de notre application a été développé en \textbf{C++} standard.
+Cette section détaille les choix technologiques et l'environnement logiciel retenus pour l'implémentation du système de simulation, en explicitant les compromis d'ingénierie matérielle et logicielle mis en œuvre.
 
-Concernant l'API matérielle, notre choix s'est porté sur \textbf{OpenGL (version 4.3+)} plutôt que sur des plateformes de calcul dédiées (CUDA, OpenCL). Ce choix repose sur un compromis d'ingénierie réfléchi :
+\subsection{Environnement de Développement et API Graphique}\label{subsec:env_dev}
+Le noyau algorithmique de l'application est entièrement développé en langage \textbf{C++ standard}. Ce choix est motivé par la nécessité d'un contrôle de bas niveau sur l'allocation de la mémoire vive, garantissant un temps d'exécution déterministe indispensable au maintien d'une fréquence d'affichage stable.
+
+Pour la programmation matérielle, l'API \textbf{OpenGL (version 4.3+)} a été sélectionnée au détriment de plateformes de calcul générique propriétaires ou de bas niveau telles que CUDA ou OpenCL :
 \begin{itemize}
-    \item \textbf{Compute Shaders vs CUDA :} Utiliser CUDA nous aurait verrouillés dans l'écosystème matériel NVIDIA (rendant l'exécution impossible sur des architectures AMD Radeon). Les Compute Shaders d'OpenGL partagent le \textbf{même contexte mémoire} que les shaders de rendu (Vertex/Fragment). Les textures physiques modifiées par la simulation peuvent donc être directement dessinées à l'écran l'instant suivant.
+    \item \textbf{CUDA vs Compute Shaders} : L'utilisation de CUDA restreint l'exécution de l'application aux seuls processeurs graphiques de l'écosystème NVIDIA. Les Compute Shaders d'OpenGL offrent une portabilité essentielle pour valider les tests sur des architectures matérielles distinctes.
+    \item \textbf{OpenCL vs Compute Shaders} : Contrairement à OpenCL, qui requiert l'établissement d'un contexte de calcul isolé et impose des opérations de transfert coûteuses pour l'affichage, les Compute Shaders partagent le même contexte d'exécution et les mêmes ressources graphiques que les shaders de rendu (\textit{Vertex} et \textit{Fragment Shaders}). Cette uniformité structurelle permet un traitement direct des textures physiques sans duplication de données.
 \end{itemize}
 
-Enfin, l'interface utilisateur, essentielle pour transformer ce projet académique en un véritable outil d'analyse, a été intégrée via la bibliothèque \textbf{Dear ImGui}. Cette bibliothèque permet de lier directement les variables C++ aux éléments d'interface avec un coût de rendu quasi nul, facilitant un débogage interactif.
+L'interface utilisateur est construite à l'aide de la bibliothèque \textbf{Dear ImGui}. Cette bibliothèque permet un couplage direct entre les variables de simulation du processeur et les éléments de contrôle graphique avec un impact minimal sur le pipeline d'affichage, facilitant l'ajustement dynamique des paramètres physiques.
 
-\subsection{Génération Topographique et Importation}
-Le terrain peut être généré procéduralement sur GPU (via un mélange de bruits de type \textit{Ridge} et FBM) ou importé depuis des \textit{heightmaps} réelles. Cette flexibilité permet de tester la robustesse de l'érosion sur des morphologies variées, des pics acérés aux vallées glaciaires lisses.
+\subsection{Le Pipeline de Rendu Graphique (Vertex et Fragment Shaders)}\label{subsec:pipeline_rendu}
+Conformément à la séparation des préoccupations matérielles, la visualisation du terrain est découplée de sa simulation. L'affichage s'appuie sur le pipeline graphique standard d'OpenGL, exploité pour minimiser les transferts de données entre le processeur (CPU) et la carte graphique (GPU).
 
-\subsection{Structures de Données et Stockage GPU}
-Pour implémenter les modèles mathématiques décrits précédemment, la simulation utilise une grille de $1024 \times 1024$ cellules. Chaque variable physique est stockée dans une texture OpenGL en virgule flottante 32-bits (\texttt{GL\_R32F} ou \texttt{GL\_RGBA32F}) pour garantir la précision nécessaire aux calculs d'accumulation sédimentaire \cite{MDH07} :
+\paragraph{Déplacement géométrique matériel (\textit{Vertex Displacement}) :}
+L'approche s'appuie sur un \textbf{\textit{Vertex Buffer Object} (VBO)}, structure de stockage allouée directement au sein de la mémoire vidéo globale (\textit{VRAM}). Un maillage plan régulier, représentant la topologie neutre de la grille, est instancié de manière statique dans ce VBO lors de l'initialisation. Cette stratégie évite de transférer les coordonnées géométriques du maillageà chaque trame. Lors du rendu, le \textbf{\textit{Vertex Shader}} accède en lecture aux textures de hauteurs (substrat et eau) générées par la simulation physique pour actualiser la coordonnée verticale de chaque sommet à la volée.
+
+\paragraph{Calcul des normales et ombrage (\textit{Fragment Shader}) :}
+Les normales de surface, nécessaires aux calculs d'illumination, sont évaluées localement au sein du \textbf{\textit{Fragment Shader}} via la fonction d'échantillonnage \texttt{texelFetch}. Cette méthode déduit le gradient local directement depuis la texture de hauteur, évitant la pré-allocation et l'écriture d'une texture de normales dédiée. L'ombrage topographique (\textit{Shading}) applique ensuite une interpolation procédurale des couleurs en fonction de l'altitude et de la pente locale, différenciant visuellement la roche, les sédiments et la couche d'eau.
+
+\subsection{Paradigme d'Exécution des Compute Shaders}\label{subsec:paradigme_compute}
+L'implémentation initiale de Mei et al. \cite{MDH07} subissait les contraintes architecturales des processeurs graphiques de son époque, imposant l'usage détourné des \textit{Fragment Shaders} pour le calcul scientifique. Cette approche exigeait la génération d'une géométrie plane fictive pour forcer la phase de rastérisation, l'encapsulation artificielle des données physiques dans les quatre canaux de couleur RGBA, et multipliait les accès redondants à la mémoire globale (\textit{VRAM}).
+
+Le basculement vers l'architecture des \textbf{Compute Shaders} s'affranchit des étapes de la chaîne de rastérisation classique. Les ressources de calcul accèdent directement aux structures de données bidimensionnelles ou linéaires via des fonctions dédiées d'écriture et de lecture synchrone (\texttt{imageLoad} et \texttt{imageStore}).
+
+De plus, ce modèle d'exécution autorise l'exploitation de la mémoire partagée locale (\textit{Shared Memory}). Ce cache matériel rapide permet de stocker temporairement les valeurs des mailles adjacentes lors des calculs de gradients topographiques. Il réduit ainsi la dépendance vis-à-vis de la bande passante de la mémoire vidéo globale, déplaçant le goulot d'étranglement de l'application vers la capacité de traitement arithmétique pur du processeur graphique.
+
+% ----------------------------------------------------------------------------------------------------------------------------------------
+% 5. Contribution 1
+\section{Contribution 1 : Implémentation du Modèle Hydraulique via Compute Shaders}\label{sec:contrib_1}
+
+La mise en œuvre numérique du modèle eulérien requiert une architecture logicielle capable de traiter simultanément l'évolution temporelle de plus d'un million de cellules. Cette section détaille la structuration des données en mémoire vidéo et la stratégie de synchronisation matérielle retenue.
+
+\subsection{Structures de Données et Discrétisation en VRAM}\label{subsec:structures_donnees}
+L'implémentation repose sur une grille d'évaluation bidimensionnelle d'une résolution standard de $1024 \times 1024$ cellules. Afin d'exploiter le parallélisme matériel du processeur graphique (GPU), chaque variable physique de la simulation est encapsulée dans une texture OpenGL en virgule flottante 32-bits (\texttt{GL\_R32F} ou \texttt{GL\_RGBA32F}). L'usage de cette précision spatiale est requis pour prévenir les erreurs d'arrondi lors des calculs d'accumulation sédimentaire sur des temps géologiques longs \cite{MDH07}. Les grandeurs physiques sont réparties ainsi :
 
 \begin{itemize}
-    \item \textbf{Hauteurs ($b, d$) :} Deux canaux stockant la roche et l'eau.
-    \item \textbf{Sédiments ($s$) :} Quantité de matière en suspension.
-    \item \textbf{Flux ($f$) :} Texture à 4 canaux stockant les débits sortants ($L, R, T, B$) vers les voisins.
-    \item \textbf{Vitesse ($\vec{v}$) :} Champ vectoriel 2D déduit du mouvement de l'eau.
+    \item \textbf{Hauteurs ($b, d$) :} Une texture à deux canaux stockant respectivement l'altitude du substrat rocheux $b$ et la hauteur de la lame d'eau $d$.
+    \item \textbf{Sédiments ($s$) :} Un canal dédié à la concentration de matière en suspension dans le fluide.
+    \item \textbf{Flux ($f$) :} Une texture à 4 canaux stockant les vecteurs de débits sortants ($f^L, f^R, f^T, f^B$) vers les cellules cardinales adjacentes (voisinage de von Neumann).
+    \item \textbf{Vitesse ($\vec{v}$) :} Un champ vectoriel bidimensionnel déduit de la cinématique de l'eau pour résoudre l'advection.
 \end{itemize}
 
 \begin{figure}[htbp]
@@ -199,229 +286,231 @@ Pour implémenter les modèles mathématiques décrits précédemment, la simula
     \label{fig:data_structure}
 \end{figure}
 
-L'utilisation des \textbf{Compute Shaders} permet de manipuler ces textures directement via \texttt{imageLoad} et \texttt{imageStore}. Cette approche s'affranchit du pipeline graphique classique et permet d'exécuter les passes physiques (flux, érosion, transport) de manière atomique et ultra-rapide.
+\subsection{Séquençage de la Boucle de Simulation}\label{subsec:boucle_simu}
+L'évolution temporelle du système est décomposée en une succession d'étapes de calculs atomiques. Le pipeline d'érosion forme une boucle itérative où chaque étape s'exécute de manière massivement parallèle sur l'ensemble de la grille de résolution, exploitant les résultats physiques validés à la passe précédente.
 
-\subsection{Améliorations du Modèle de Mei : Apports de Jákó et Szirmay-Kalos}
-Bien que le modèle de Mei et al. \cite{MDH07} pose des fondations algorithmiques extrêmement solides pour la simulation Eulérienne en temps réel, son exécution sur des échelles de temps géologiques révèle certaines limites physiques inhérentes : creusement infini des fonds sous-marins, arrachement sédimentaire isotrope, et légères instabilités de la surface hydrique.
+Le cycle de vie d'une itération de simulation s'articule autour des grandes phases suivantes :
+\begin{enumerate}
+    \item \textbf{Apport Hydrique :} Intégration globale des précipitations et des sources localisées.
+    \item \textbf{Routage des Flux :} Calcul des différences de pression hydrostatique et dérivation des vecteurs de débits sortants selon le modèle des tuyaux virtuels.
+    \item \textbf{Cinématique :} Bilan volumétrique local pour déterminer la nouvelle hauteur d'eau et inférence du vecteur vitesse résultant.
+    \item \textbf{Érosion et Sédimentation :} Évaluation de la capacité de transport et échanges de masse entre le substrat rocheux et le fluide.
+    \item \textbf{Advection :} Déplacement des sédiments en suspension par remontée du champ de vitesse (méthode semi-Lagrangienne).
+    \item \textbf{Évaporation :} Extraction progressive du volume d'eau et application des conditions aux limites du domaine (drains).
+\end{enumerate}
 
-Afin de pallier ces défauts et d'élever le réalisme de notre moteur, nous avons outrepassé l'implémentation classique en y intégrant trois corrections physiques majeures issues des travaux postérieurs de Jákó et Szirmay-Kalos \cite{Jako11}. Ces ajouts, intégrés directement au cœur de notre passe d'érosion et de sédimentation (Passe 4), modifient fondamentalement le comportement du fluide :
+\textit{Nota Bene : Afin de privilégier l'analyse conceptuelle de l'architecture, le détail algorithmique exhaustif de chacune de ces passes de Compute Shaders (fichiers \texttt{.glsl}) est documenté formellement en \textbf{Annexe A}.}
 
-\begin{itemize}
-    \item \textbf{Inhibition de l'érosion en eaux profondes ($l_{max}$) :} Dans le modèle de 2007, un fleuve se jetant dans un lac continue d'éroder le fond marin de manière perpétuelle. Nous avons implémenté un facteur d'atténuation dynamique contraint par la profondeur locale. Lorsque la hauteur de la colonne d'eau dépasse un seuil critique, la capacité de transport s'annule. Ce mécanisme protège naturellement les fonds sous-marins et force le dépôt des sédiments aux embouchures, générant des deltas fluviaux et des hauts-fonds organiques.
+\subsection{Stabilité Numérique et Condition CFL}\label{subsec:cfl}
+La résolution explicite de la cinématique des fluides sur une grille discrète impose des contraintes mathématiques strictes. L'instabilité majeure inhérente à cette approche survient si le pas de temps d'intégration ($\Delta t$) est inadapté à la vélocité maximale du fluide ($v_{max}$).
 
-    \item \textbf{Collision Hydrologique 3D :} La capacité d'arrachement de la roche ne dépend plus uniquement d'une simple pente bidimensionnelle. L'algorithme calcule désormais la force d'impact via le produit scalaire entre le vecteur de vélocité tridimensionnel du fluide et la normale de la surface heurtée. Une masse d'eau percutant un obstacle géométrique de plein fouet creusera ainsi de manière exponentiellement plus agressive qu'un fluide glissant parallèlement à une pente douce.
+Pour garantir la convergence du modèle, le solveur implémente une vérification de la condition de \textbf{Courant-Friedrichs-Lewy (CFL)}. Cette condition mathématique stipule que le fluide ne doit pas traverser une distance supérieure à la taille d'une maille spatiale ($\Delta x$) en une seule itération temporelle :
+\begin{equation}\label{eq:cfl}
+    \Delta t \le \frac{\Delta x}{v_{max}}
+\end{equation}
+Si la vitesse hydrodynamique excède cette limite, le fluide omet graphiquement les interactions avec les cellules intermédiaires, provoquant une divergence mathématique immédiate et l'explosion numérique du modèle. Pour maintenir le système sous ce seuil critique de stabilité de manière déterministe, un coefficient de friction spatiale est introduit lors du calcul de la vélocité, agissant comme un frein visqueux qui borne $v_{max}$ en simulant la rugosité naturelle du substrat.
 
-    \item \textbf{Couplage Volumétrique Eau-Sédiment :} L'approche originelle omettait le volume physique occupé par la terre en suspension dans l'eau. Nous avons résolu cette incohérence par un couplage strict des états : lorsqu'un volume de roche est arraché, il s'ajoute instantanément à la colonne d'eau locale. Inversement, la déposition sédimentaire abaisse le niveau d'eau. Cette correction de la conservation des masses neutralise les comportements indésirables, garantissant la stabilité absolue de la surface des lacs sur de très longues sessions de simulation.
-\end{itemize}
+\subsection{Gestion des Accès Concurrents et Synchronisation Mémoire}\label{subsec:ping_pong}
+La parallélisation massive d'une grille Eulérienne soulève la problématique critique des accès concurrents en écriture (\textit{Race Conditions}). Lors d'une passe de calcul, si l'état courant d'une cellule était directement écrasé par sa nouvelle valeur, les mailles voisines en cours de traitement liraient un état physique partiellement corrompu.
 
-L'intégration de ces contraintes transforme le solveur mathématique de base en une véritable simulation géomorphologique, et ce, avec un coût computationnel supplémentaire rendu totalement invisible par l'architecture des Compute Shaders.
+Afin d'isoler l'état initial de l'état futur, l'architecture repose sur un mécanisme de \textbf{double tamponnage} (\textit{ping-pong buffering}). Les textures d'état (hauteurs, eau, sédiments) sont allouées en double au sein de la VRAM. À l'itération $i$, les groupes de travail matériels accèdent de manière asynchrone et en lecture seule aux tampons \texttt{READ} (contenant l'état validé à l'itération $i-1$) et inscrivent les nouveaux états physiques dans les tampons \texttt{WRITE}.
 
-\subsection{Érosion Thermique Avancée : Dureté Locale et Voisinage de Moore}
-La modélisation de l'érosion thermique sur une grille discrète soulève généralement deux problématiques géométriques majeures : l'apparition de structures pyramidales artificielles (lorsque l'évaluation se restreint à un voisinage de von Neumann à 4 directions) et un aspect "plastique" globalisé (causé par l'utilisation d'un angle de talus constant sur l'ensemble du domaine).
-
-Pour contourner ces défauts, notre algorithme intègre directement le modèle avancé de Jákó et Szirmay-Kalos \cite{Jako11}. L'instabilité mécanique et le transfert de sédiments y sont évalués sur un voisinage de Moore (8 directions), permettant la formation de cônes d'éboulis organiques et parfaitement circulaires. Plutôt que de déplacer la matière de manière séquentielle et gloutonne, nous avons appliqué le paradigme Eulérien des "tuyaux virtuels" au substrat rocheux lui-même.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.60\linewidth]{images/thermal.png}
-    \caption{Comparaison géométrique du modèle des tuyaux virtuels appliqué à l'écoulement d'eau (voisinage de von Neumann à 4 directions, flèche bleue) et à l'éboulement thermique des sédiments (voisinage de Moore à 8 directions, flèche rouge).}
-    \label{fig:thermal_pipe_model}
-\end{figure}
-
-Une première passe calcule les volumes de terre devant s'effondrer et les stocke sous forme de flux directionnels virtuels, tandis qu'une seconde passe synchronise la nouvelle topologie en additionnant ces flux. Cette architecture en deux temps résout élégamment les dépendances d'écriture tout en garantissant la conservation stricte du volume topologique.
-
-De plus, afin de briser l'homogénéité visuelle typique des simulations standards (l'effet plastique), la tangente de l'angle de talus est modulée en chaque point par un coefficient de dureté locale $R(x,y)$. Ce coefficient est généré dynamiquement sur le GPU en combinant l'élévation (la roche en haute altitude étant physiquement plus dense) et un bruit pseudo-aléatoire simulant l'hétérogénéité des strates géologiques. Les sommets peuvent ainsi soutenir des falaises presque verticales, tandis que les vallées s'affaissent en pentes douces, créant une richesse géomorphologique inatteignable avec un angle de repos statique.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.60\linewidth]{images/pipes_thermal_erosion.png}
-    \caption{Mécanisme des tuyaux virtuels appliqué à l'érosion thermique. Les transferts de sédiments (flèches rouges) s'effectuent exclusivement vers les cellules voisines dont le dénivelé excède l'angle de talus local. À l'inverse, l'éboulement est mathématiquement inhibé (flèches jaunes) vers les zones considérées comme géologiquement stables.}
-    \label{fig:thermal_exemple}
-\end{figure}
-
-\subsection{Stabilité Numérique et Condition CFL}
-Un défi inhérent aux solveurs de fluides explicites réside dans leur instabilité si le pas de temps d'intégration ($\Delta t$) est inadapté à la vélocité maximale du fluide. Si l'eau se déplace sur une distance supérieure à la taille d'une cellule en une seule itération, le modèle mathématique s'effondre. Pour éviter ces explosions numériques, nous avons implémenté une vérification stricte de la condition de Courant-Friedrichs-Lewy (CFL) :
-$$ \Delta t \le \frac{\Delta x}{v_{max}} $$
-Notre interface ImGui avertit l'utilisateur de manière dynamique si les paramètres de gravité ou d'apport d'eau nécessitent une réduction du pas de temps pour maintenir la cohésion mathématique de la simulation.
-
-\subsection{Implémentation du Pipeline et Gestion Mémoire}
-La boucle de calcul est exécutée par des groupes de travail (\textit{Workgroups}) matériels de $16 \times 16$ \textit{threads}, une taille empiriquement optimale pour maximiser l'occupation des cœurs de calcul de l'architecture graphique.
-
-Pour pallier les problèmes de concurrence en écriture inévitables sur une grille globale, notre architecture repose sur un \textbf{double tamponnage} (\textit{ping-pong buffering}). Les textures stockant les hauteurs, l'eau et les sédiments sont dupliquées. À l'itération $i$, les shaders lisent l'état figé dans les tampons \texttt{READ} et inscrivent les résultats dans les tampons \texttt{WRITE}.
-
-L'intégrité de la simulation est assurée par l'injection de barrières de mémoire (\texttt{glMemoryBarrier\allowbreak(GL\_\allowbreak SHADER\_\allowbreak IMAGE\_\allowbreak ACCESS\_\allowbreak BARRIER\_\allowbreak BIT)}) entre chaque appel de noyau. Cette instruction force le GPU à purger les données de son cache L1/L2 vers la mémoire globale avant d'autoriser le shader suivant à débuter. Grâce à ce séquençage en "aller-retour" (du tampon \texttt{READ} vers \texttt{WRITE}, puis inversement), l'état physique final est toujours garanti d'être valide et disponible dans le tampon \texttt{READ} pour le rendu visuel de la trame courante.
+L'intégrité séquentielle globale de la simulation est garantie par l'injection de barrières de mémoire formelles (\texttt{glMemoryBarrier}) entre chaque passe fonctionnelle. Cette instruction force l'ordonnanceur du processeur graphique à interrompre l'exécution, attendant que l'ensemble des cœurs de calcul aient purgé leurs mémoires caches (L1/L2) vers la mémoire vidéo globale avant d'autoriser l'exécution de la passe de shaders suivante.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\linewidth]{images/ping_pong.png}
-    \caption{Architecture du double tamponnage : les passes physiques écrivent dans le tampon temporaire (WRITE), tandis que les passes de post-traitement rapatrient l'état final dans le tampon principal (READ), sous la protection des barrières mémoire.}
+    \caption{Architecture du double tamponnage en mémoire vidéo. Les processus d'évaluation écrivent dans les tampons temporaires (\texttt{WRITE}), tandis que l'état validé demeure en lecture seule (\texttt{READ}), sous la synchronisation stricte des barrières mémoire.}
     \label{fig:ping_pong}
 \end{figure}
 
-\subsection{Le Pipeline de Rendu Graphique}
-Calculer l'érosion d'une grille de $1024 \times 1024$ cellules à haute fréquence n'a de sens que si le moteur graphique est capable d'afficher ces plus de deux millions de triangles à la même vitesse. Pour ne pas brider la simulation physique, notre pipeline de rendu a été drastiquement optimisé.
+% ----------------------------------------------------------------------------------------------------------------------------------------
+% 6. Contribution 2 (améliorations)
+\section{Contribution 2 : Améliorations du Modèle et Érosion Thermique}\label{sec:contrib_2}
 
-\paragraph{Déplacement des Sommets sur GPU (\textit{Vertex Displacement}) :}
-Plutôt que de faire lire le tableau des hauteurs par le CPU pour générer la géométrie, nous envoyons à la carte graphique, une unique fois lors de l'initialisation, un maillage plan régulier (\textit{Flat Grid}) stocké dans un \textit{Vertex Buffer Object} (VBO). Lors de la phase de rendu, le \textbf{Vertex Shader} lit directement la texture des hauteurs $b$ (roche) et $d$ (eau) produite par la simulation physique, et déplace la coordonnée $Y$ de chaque sommet à la volée.
+Afin de pallier les limites géométriques du modèle hydraulique standard, l'architecture développée intègre trois corrections physiques issues des travaux de Jákó et Szirmay-Kalos \cite{Jako11}, ainsi qu'un module dédié à la simulation de l'érosion thermique.
 
-\paragraph{Calcul des Normales à la Volée :}
-Pour que la lumière réagisse au relief de manière réaliste, chaque sommet doit posséder un vecteur normal. Au lieu de dédier une passe de Compute Shader supplémentaire pour calculer et stocker ces normales (ce qui consommerait de la bande passante mémoire), nous les calculons dynamiquement dans le \textbf{Fragment Shader}. En échantillonnant l'altitude des pixels voisins directement dans la texture de hauteur via la fonction \texttt{texelFetch}, le shader déduit le gradient local et calcule le produit vectoriel pour obtenir la normale parfaite. Cette approche permet d'économiser la bande passante mémoire qui est le véritable goulot d'étranglement de notre application.
+\subsection{Couplage Volumétrique et Collision Hydrologique}\label{subsec:couplage_volumetrique}
+Le transfert de masse entre le substrat rocheux et la terre en suspension est régi par une passe d'érosion et de sédimentation affinée. L'altération topographique n'y est pas instantanée, mais suit une cinématique de transfert adossée à la capacité de transport $C$ du fluide :
 
-\paragraph{Ombrage et Coloration Topographique (\textit{Shading}) :}
-La couleur finale du terrain est générée procéduralement. Le shader interpole différentes textures (herbe, roche, neige) non seulement en fonction de l'altitude, mais surtout en fonction de la pente (déduite de la normale calculée). Ainsi, une falaise abrupte apparaîtra rocheuse même à basse altitude, tandis qu'un plateau sera couvert de sédiments ou de végétation. La couche d'eau, quant à elle, bénéficie d'un ombrage transparent teinté de bleu dont l'opacité dépend directement de la valeur de la colonne d'eau $d$, rendant l'accumulation dans les lacs visuellement distincte des minces ruisseaux.
+\begin{itemize}
+    \item \textbf{Inhibition en eaux profondes ($l_{max}$) :} Un facteur d'atténuation contraint la capacité de transport en fonction de la profondeur locale de la colonne d'eau. Ce mécanisme réduit mathématiquement l'érosion des fonds sous-marins et force la déposition sédimentaire aux embouchures fluviales.
+    \item \textbf{Collision Hydrologique 3D :} La force d'impact érosive est calculée via le produit scalaire entre le vecteur de vélocité tridimensionnel du fluide et le vecteur normal de la surface heurtée. Ce calcul pondère l'arrachement de la matière selon l'angle de frappe de l'eau contre le relief.
+    \item \textbf{Couplage Volumétrique Eau-Sédiment :} Le volume physique occupé par la matière en suspension est explicitement comptabilisé. Lorsqu'un volume de roche est dissous, il est instantanément ajouté à la colonne d'eau locale, et inversement lors de la sédimentation, assurant ainsi la stabilité numérique de la surface des étendues d'eau.
+\end{itemize}
+
+L'efficacité visuelle de ces ajouts conjoints est illustrée en Figure \ref{fig:comparaison_hydro} sur une topologie modélisant le lac Titicaca. L'érosion ne creuse plus indéfiniment la cuvette, mais sculpte de véritables lignes de courant sédimentaires sous-marines sous l'effet de la dynamique tridimensionnelle du fluide.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/titicaca_erosion.png}
+    \caption{Application du modèle hydrologique amélioré sur le relief du lac Titicaca. À gauche : topologie initiale. À droite : résultat après simulation, mettant en évidence les lignes de courant formées au fond du lac grâce à la modélisation des impacts hydrodynamiques 3D.}
+    \label{fig:comparaison_hydro}
+\end{figure}
+
+Si ces améliorations stabilisent le comportement sous-marin et les plaines d'inondation, l'intégration d'un modèle d'érosion thermique demeure une nécessité topologique pour les reliefs aériens. En effet, le modèle hydraulique isolé génère des falaises verticales abruptes aux abords des flux d'eau, créant des structures géologiquement instables et visuellement irréalistes \cite{SGG24}.
+
+\subsection{Érosion Thermique Avancée (Voisinage de Moore)}\label{subsec:erosion_thermique}
+La modélisation de l'érosion thermique simule l'effondrement gravitationnel sur un voisinage de Moore (évaluation sur 8 directions). Cette discrétisation spatiale élargie prévient l'apparition d'artefacts pyramidaux alignés sur les axes de la grille et permet la formation de cônes d'éboulis morphologiquement cohérents.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.60\linewidth]{images/thermal.png}
+    \caption{Comparaison géométrique du modèle des tuyaux virtuels appliqué à l'écoulement d'eau (voisinage de von Neumann à 4 directions, flèche bleue) et à l'éboulement thermique des sédiments (voisinage de Moore à 8 directions, flèche rouge), issu de Jákó et Szirmay-Kalos \cite{Jako11}.}
+    \label{fig:thermal_pipe_model}
+\end{figure}
+
+Le formalisme des tuyaux virtuels, initialement prévu pour la mécanique des fluides, est transposé au substrat rocheux selon les règles suivantes :
+\begin{itemize}
+    \item \textbf{Dureté et Angle de Talus :} Le seuil de rupture mécanique est défini par un coefficient de dureté locale $R(x,y)$. Cette variable est générée dynamiquement par la combinaison d'un bruit spatial et de l'élévation, simulant l'hétérogénéité des strates géologiques.
+    \item \textbf{Distribution des Flux :} Si le gradient de pente excède l'angle de talus $R(x,y)$, le volume de terre instable est calculé puis réparti proportionnellement dans 8 flux directionnels virtuels, en privilégiant les pentes les plus fortes. L'éboulement est mathématiquement inhibé en direction des cellules contenant un flux d'eau, ce qui protège les lits de rivières fraîchement formés contre un comblement immédiat.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.60\linewidth]{images/pipes_thermal_erosion.png}
+    \caption{Mécanisme des tuyaux virtuels appliqué à l'érosion thermique, d'après Jákó et Szirmay-Kalos \cite{Jako11}. Les transferts de sédiments (flèches rouges) s'effectuent vers les cellules voisines dont le dénivelé excède l'angle de talus local. À l'inverse, l'éboulement est inhibé (flèches jaunes) vers les zones stables.}
+    \label{fig:thermal_exemple}
+\end{figure}
+
+La synchronisation finale de la topologie s'appuie sur une approche par rassemblement (\textit{Gather}) pour éluder les conditions de course sans recourir à des opérations atomiques, coûteuses pour le GPU. Lors de cette étape de mise à jour, chaque cellule interroge en lecture seule les flux thermiques virtuels préparés par ses 8 voisines pour calculer son propre bilan sédimentaire local, assurant une conservation stricte de la masse topologique.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/comparaison_thermique.png}
+    \caption{Impact du module d'érosion thermique sur la topologie. À gauche : falaises verticales instables. À droite : formation de cônes d'éboulis naturels après l'effondrement gravitationnel sur le voisinage de Moore.}
+    \label{fig:comparaison_thermique}
+\end{figure}
 
 % ----------------------------------------------------------------------------------------------------------------------------------------
-% Différentes passes de notre projet
-\section{Détails de l'Implémentation du Pipeline}
+\newpage
+% 7. Résultats, Évaluation et Discussion
+\section{Résultats, Évaluation et Discussion}\label{sec:resultats}
 
-Notre pipeline d'érosion a été segmenté en huit passes de Compute Shaders distinctes, formant une boucle itérative où chaque étape dépend des résultats de la précédente. Pour pallier les manques du modèle historique, nous avons enrichi chaque phase par des modèles physiques plus récents.
+L'évaluation de l'architecture développée nécessite une \textbf{analyse prudente}, la comparaison des performances algorithmiques étant intimement liée à l'évolution de la puissance matérielle entre les travaux historiques (2007-2011) et l'environnement d'exécution contemporain.
 
-\paragraph{1. Apport Hydrique : Pluie et Sources (\texttt{water\_increment.glsl}) :}
-Cette première étape injecte l'énergie initiale (le volume d'eau) dans notre système. La hauteur de la colonne d'eau $d$ de chaque cellule est mise à jour en intégrant l'apport hydrique sur le pas de temps $\Delta t$. Cet apport se décompose en deux mécanismes distincts :
-\begin{itemize}
-    \item \textbf{Précipitation globale :} Une pluie uniforme $r$ arrose l'intégralité de la topographie selon l'équation $d_{t+\Delta t} = d_t + (\Delta t \cdot r)$. Au-delà de l'aspect géologique, le maintien de cette nappe d'eau globale est une nécessité mathématique. En mécanique des fluides sur grille, une épaisseur d'eau nulle ($d = 0$) entraîne un risque de division par zéro lors du calcul ultérieur de la vitesse ($v = \text{débit} / d$). La pluie garantit ainsi une fine pellicule hydrique permanente, prévenant l'apparition de ces singularités numériques.
-    \item \textbf{Sources locales (Rivières) :} Afin d'offrir un contrôle interactif, le simulateur permet à l'utilisateur d'injecter un débit d'eau massif à des coordonnées ciblées. Mathématiquement, cela se traduit par une addition scalaire contrainte dans un rayon défini, simulant la résurgence d'une source souterraine et permettant de diriger intentionnellement le creusement d'une vallée.
-\end{itemize}
+\subsection{Méthodologie de Mesure et Biais Matériel}\label{subsec:methodo_mesure}
+Les temps de cycle documentés par Mei \cite{MDH07} (exécutés sur un processeur Pentium 4 à 3,0 GHz et un GPU NVIDIA GeForce 8800 GTX) et Jákó \cite{Jako11} (sur Intel Core i7 et GPU NVIDIA GeForce GTX 285) ont été obtenus sur des architectures dont la puissance brute n'est pas comparable avec notre plateforme de test. Cette dernière est équipée d'un processeur AMD Ryzen 5 2600 couplé à une carte graphique AMD Radeon RX 5700. Afin de quantifier spécifiquement les bénéfices de l'architecture matérielle moderne associée aux Compute Shaders, une implémentation rigoureusement équivalente s'exécutant de manière séquentielle sur le processeur (CPU) en C++ a été développée.
 
-\paragraph{2. Calcul des Flux par Tuyaux Virtuels (\texttt{flux\_compute.glsl}) :}
-Cette passe constitue le moteur hydrodynamique du simulateur. Elle évalue la quantité d'eau qui doit transiter entre chaque cellule et son voisinage de von Neumann (les 4 directions cardinales), en s'appuyant sur le modèle de Mei et al. \cite{MDH07}. L'évaluation se déroule en trois étapes :
-\begin{itemize}
-    \item \textbf{Pression hydrostatique :} L'algorithme calcule d'abord la différence d'altitude absolue $\Delta h = (b_{local} + d_{local}) - (b_{voisin} + d_{voisin})$. Si $\Delta h > 0$, la gravité exerce une pression poussant le fluide vers la cellule voisine.
-    \item \textbf{Accélération inertielle :} L'écoulement n'est pas instantané ; l'eau possède une inertie. Le flux sortant $f$ est mis à jour en ajoutant la nouvelle accélération au flux de l'itération précédente :
-          $$ f_{t+\Delta t} = \max \left( 0, f_t + \Delta t \cdot A \frac{g \cdot \Delta h}{l} \right) $$
-          L'utilisation de la fonction $\max(0, \dots)$ est ici cruciale : elle garantit un écoulement strictement unidirectionnel, empêchant mathématiquement l'eau de remonter un tuyau à contre-courant. $A$ représente la section transversale du flux, $g$ la constante gravitationnelle, et $l$ la distance inter-cellulaire.
-    \item \textbf{Conservation de la masse (Facteur $K$) :} Sur une grille discrète, une forte pente combinée à un pas de temps $\Delta t$ trop grand pourrait théoriquement forcer une cellule à expulser un volume d'eau supérieur à celui qu'elle contient réellement. Pour prévenir cette aberration physique (qui engendrerait une hauteur d'eau négative), le système calcule un scalaire de sécurité $K$. Si la somme des flux sortants excède le volume disponible, $K$ pondère uniformément les quatre vecteurs de sortie vers le bas. Cela garantit une conservation de masse absolue et une stabilité inconditionnelle du solveur de fluides.
-\end{itemize}
+Pour garantir l'exactitude des relevés temporels sur le GPU et anticiper les latences de communication inter-composants, les mesures n'ont pas été réalisées côté CPU. Elles s'appuient sur des requêtes asynchrones matérielles natives à l'API OpenGL (\texttt{GL\_TIME\_ELAPSED} via des objets \texttt{Query}), permettant de chronométrer le temps de traitement physique au sein même de la puce graphique.
 
-\paragraph{3. Mis à jour du niveau d'eau(\texttt{water\_update.glsl}) :}
-Une fois les flux validés, cette passe synchronise l'état physique de la cellule selon trois axes :
-\begin{itemize}
-    \item \textbf{Mise à jour hydrique :} La nouvelle hauteur d'eau $d_{t+\Delta t}$ est déduite par une simple somme algébrique du volume préexistant, du volume entrant depuis le voisinage, et du volume sortant.
-    \item \textbf{Inférence du champ vectoriel :} Dans le modèle des Shallow Water, la vitesse $\vec{v} = (u,v)$ n'est pas stockée directement comme une variable indépendante, elle est \textit{inférée}. L'algorithme calcule le débit net traversant la cellule sur l'axe $X$ (moyenne des flux gauche/droite) et l'axe $Y$ (moyenne haut/bas). En divisant ce vecteur de débit par la hauteur d'eau moyenne locale, on obtient le vecteur vitesse tridimensionnel du fluide.
-    \item \textbf{Friction et Rugosité spatiale :} Nous avons introduit un coefficient de friction dans le calcul de cette vitesse. Sans cette dissipation d'énergie cinétique, la gravité forcerait l'eau dévalant une falaise à atteindre une vitesse infinie (violant la condition CFL). Ce frein simule la rugosité du terrain (similaire au coefficient de Manning en hydrologie), garantissant un temps de résidence suffisant du fluide sur les pentes abruptes pour que l'érosion puisse s'y opérer.
-\end{itemize}
+Afin d'assurer la représentativité statistique de ces relevés empiriques, un protocole d'évaluation rigoureux a été appliqué. Le banc d'essai (\textit{benchmark}) a été exécuté en continu sur une durée de 10 minutes de simulation ininterrompue. Les temps de cycle ont été échantillonnés et agrégés à intervalles réguliers d'une minute, puis moyennés à l'issue de la période de test. Cette méthodologie permet d'atténuer les éventuelles micro-fluctuations de performance inhérentes aux processus en arrière-plan du système d'exploitation ou aux variations de fréquence d'horloge du matériel.
 
-\paragraph{4. Érosion et Sédimentation Avancées (\texttt{erosion\_deposition.glsl}) :}
-Cette passe régit le transfert de masse entre la roche dure (le substrat $b$) et la terre en suspension (le sédiment $s$). Le transfert est dicté par la \textbf{capacité de transport} $C$, représentant la charge sédimentaire maximale que l'eau peut porter avant saturation.
-\begin{itemize}
-    \item \textbf{Évaluation de la Capacité :} Suivant les travaux de Jákó \cite{Jako11} introduits en Section 3.4, $C$ est pondéré par l'impact géométrique (produit scalaire) et freiné en eaux profondes ($l_{max}$) pour protéger les fonds marins :
-          $$ C = K_c \cdot \max(0.15, -\vec{v}_{3D} \cdot \vec{n}) \cdot |\vec{v}| \cdot l_{max} $$
-    \item \textbf{Cinétique de Transfert :} L'altération n'est pas instantanée. Si l'eau est sous-saturée ($C > s$), elle arrache de la roche selon un taux de dissolution $K_s$ : $\Delta s = K_s \cdot (C - s)$. Si l'eau est sur-saturée ($C < s$), elle dépose le surplus selon un taux de sédimentation $K_d$ : $\Delta s = K_d \cdot (s - C)$. La topologie $b$ et la charge sédimentaire $s$ sont mises à jour par ces deltas.
-\end{itemize}
-
-\paragraph{5. Transport Sédimentaire par Advection (\texttt{sediment\_transport.glsl}) :}
-Une fois arrachés au sol, les sédiments $s$ ne restent pas immobiles : ils sont charriés par le courant. C'est le phénomène physique d'\textbf{advection}. La difficulté majeure sur une grille fixe (paradigme Eulérien) est de déplacer cette matière continue d'une case à l'autre sans créer de "trous" ou d'accumulations aberrantes.
-
-Pour y parvenir, nous utilisons la méthode d'advection \textbf{semi-Lagrangienne rétrograde} \cite{MDH07}. Plutôt que d'essayer de calculer où vont aller les sédiments (ce qui s'avère instable), l'algorithme "regarde en arrière" (\textit{backtracing}). Ce mécanisme se déroule en trois étapes :
-\begin{itemize}
-    \item \textbf{Ciblage spatial :} Pour chaque cellule $(x,y)$, l'algorithme lit le vecteur vitesse actuel de l'eau $\vec{v}$.
-    \item \textbf{Remontée du temps :} Il remonte virtuellement le courant "dans le passé" d'une durée $\Delta t$ pour trouver les coordonnées exactes d'où provient l'eau qui arrive actuellement dans la cellule.
-    \item \textbf{Échantillonnage :} Comme cette coordonnée d'origine tombe rarement au centre parfait d'une case de la grille, l'algorithme calcule la quantité de sédiments présente à cet endroit précis en effectuant une moyenne pondérée des 4 cases les plus proches (\textbf{interpolation bilinéaire}). La cellule $(x,y)$ s'approprie ensuite cette nouvelle valeur.
-\end{itemize}
-
-\paragraph{6. Évaporation et Conditions aux Limites (\texttt{evaporation.glsl}) :}
-Le cycle hydrologique s'achève par l'extraction de l'eau hors du système. Cette étape est indispensable pour garantir un équilibre volumétrique sur le long terme face aux précipitations continues de la Passe 1. Cette extraction s'opère selon deux mécanismes distincts :
-\begin{itemize}
-    \item \textbf{Évaporation différentielle :} La hauteur d'eau diminue proportionnellement à un taux $K_e$, selon l'équation de décroissance $d_{t+\Delta t} = d_t \cdot (1 - K_e \cdot \Delta t)$. Au-delà de cette constante, nous avons implémenté une heuristique d'évaporation pondérée par la cinématique : l'eau stagnante ($|\vec{v}| \approx 0$) s'évapore mathématiquement plus vite que l'eau en mouvement. Ce choix d'ingénierie favorise l'assèchement naturel des flaques isolées et évite au GPU de calculer inutilement la physique de micro-volumes d'eau perpétuels, tout en préservant le débit des rivières principales.
-    \item \textbf{Ouverture du domaine (Conditions de Dirichlet) :} Sur une grille mathématique finie, l'accumulation de fluides aux frontières génère des barrages artificiels irréalistes. Pour contourner ce problème, cette passe impose des \textbf{conditions aux limites de Dirichlet} de valeur nulle sur tout le périmètre de la carte. En forçant systématiquement la hauteur d'eau $d$ et la charge sédimentaire $s$ à zéro sur les bords de la texture, nous transformons la grille fermée en un système ouvert. La matière peut ainsi s'évacuer définitivement, simulant l'écoulement naturel d'un bassin versant vers un océan infini.
-\end{itemize}
-
-\paragraph{7. Évaluation de l'Instabilité Gravitationnelle (\texttt{thermal\_flux.glsl}) :}
-Indépendamment de l'action de l'eau, cette passe simule les éboulements terrestres (érosion thermique). L'algorithme transpose le concept de "tuyaux virtuels" à la roche, en l'évaluant cette fois sur un voisinage de Moore (8 directions) \cite{Jako11} pour éviter l'apparition de montagnes pyramidales artificielles (artefact courant des voisinages à 4 directions). L'évaluation suit ces règles :
-\begin{itemize}
-    \item \textbf{Dureté et Angle de Talus :} L'algorithme évalue l'excès de pente de chaque cellule par rapport à ses voisines. Le seuil de rupture n'est pas uniforme : il est défini par un coefficient de dureté locale $R(x,y)$, généré dynamiquement par un bruit spatial. Cette hétérogénéité permet à certaines zones de soutenir des falaises presque verticales (roche dure), tandis que d'autres s'affaissent (roche friable).
-    \item \textbf{Distribution des Flux :} Si l'inclinaison dépasse l'angle de repos $R(x,y)$, le volume de terre instable est calculé puis réparti proportionnellement dans 8 flux directionnels virtuels, privilégiant les pentes les plus raides.
-    \item \textbf{Inhibition Hydrique :} L'éboulement est mathématiquement inhibé vers les cellules abritant un flux d'eau. Cette contrainte est géologiquement cruciale : elle protège les ravins et empêche les berges de s'effondrer instantanément pour combler les lits de rivières fraîchement creusés par la Passe 4.
-\end{itemize}
-
-\paragraph{8. Synchronisation (\texttt{thermal\_apply.glsl}) :}
-La topologie globale est définitivement mise à jour lors de cette dernière itération. Le découpage de l'érosion thermique en deux étapes distinctes (Calcul puis Application) répond à une contrainte architecturale critique du GPU : la gestion de la concurrence mémoire.
-\begin{itemize}
-    \item \textbf{Résolution des Conditions de Course :} Dans un modèle massivement parallèle, si un \textit{thread} (une cellule) tentait de "pousser" directement de la terre vers ses voisins, de multiples \textit{threads} pourraient écrire simultanément à la même adresse mémoire, corrompant irrémédiablement la topologie (\textit{race condition}).
-    \item \textbf{Approche par Rassemblement :} Pour contourner ce souci sans recourir à des opérations atomiques (qui sérialiseraient les calculs et anéantiraient nos performances de 960 FPS), cette passe opère en lecture locale. Chaque cellule lit en sécurité les flux thermiques que ses 8 voisins ont préparés \textit{pour elle}, et calcule son propre bilan : $b_{t+1} = b_t - \sum \text{flux\_sortants} + \sum \text{flux\_entrants}$. Ce \textit{design pattern} garantit un déterminisme absolu et une conservation topologique parfaite au gramme près.
-\end{itemize}
-
-% ----------------------------------------------------------------------------------------------------------------------------------------
-% Limites Numériques
-\subsection{Limites Numériques et Conditions aux Frontières}
-La transposition d'équations continues sur une grille discrète impose inévitablement des compromis mathématiques. Si notre architecture garantit la conservation stricte du volume hydrique, le transport sédimentaire et la gestion du domaine soulèvent des défis inhérents au paradigme Eulérien.
-
-Le premier compromis majeur concerne \textbf{la non-conservation de la masse sédimentaire}. La passe d'advection semi-Lagrangienne (Passe 5), bien que reconnue pour sa stabilité absolue face aux courants rapides, n'est pas strictement conservative. Dans les zones de forte divergence du champ vectoriel (typiquement les crêtes), de multiples cellules adjacentes ciblent la même cellule source lors du \textit{backtracing}. Ce phénomène duplique numériquement la charge sédimentaire.
-Résoudre ce défaut nécessiterait d'abandonner l'advection semi-Lagrangienne au profit de schémas strictement conservatifs (comme la méthode \textit{BFECC} ou les grilles MAC), dont le coût computationnel ruinerait les performances interactives du GPU. Nous avons donc accepté cette dérive non-physique comme un mal nécessaire du temps réel, simplement mitigée par l'application d'un infime facteur de dissipation globale évitant l'emballement du système sur les très longues sessions.
-
-Le second défi est lié à la nature finie de la grille de simulation : la gestion des \textbf{conditions aux limites}. Initialement traitée comme un système fermé, la matrice empêchait la matière de s'échapper, conduisant à une accumulation inexorable contre les frontières et à la formation de barrages artificiels noyant la topologie.
-Contrairement au problème d'advection, cette limite géométrique a pu être résolue de manière élégante en imposant des \textbf{conditions de Dirichlet nulles} sur le périmètre extérieur. Les cellules bordant la carte agissent désormais comme des "drains" continus, où la hauteur d'eau et les sédiments sont systématiquement forcés à zéro en fin de cycle. Cette modification transforme le domaine en un système ouvert, simulant l'écoulement naturel d'un bassin versant vers un océan virtuel infini.
-
-
-% ----------------------------------------------------------------------------------------------------------------------------------------
-% Résultats et Évaluation
-\section{Résultats et Évaluation}
-Afin de quantifier de manière irréfutable les bénéfices de l'architecture Compute Shader, nous avons développé une implémentation rigoureusement équivalente s'exécutant de manière séquentielle sur le processeur (CPU). Ce programme en C++ natif nous sert de \textit{baseline} absolue pour mesurer le ratio d'accélération sur des \textit{heightmaps} d'entrée identiques.
-
-Notre évaluation intègre les mesures documentées par Mei et al. en 2007 \cite{MDH07} (GeForce 8800 GTX), ainsi que les résultats plus récents de Jákó et Szirmay-Kalos en 2011 \cite{Jako11} obtenus sur une architecture ATI Radeon HD4870. À titre de comparaison, le modèle de 2011 atteignait un temps de cycle global de 15,47\,ms pour une grille de résolution similaire ($1024 \times 1014$) \cite{Jako11}. Nos propres mesures ont été isolées via les \textit{Timestamp Queries} d'OpenGL sur une plateforme composée d'un processeur AMD Ryzen 5 2600 et d'une carte graphique AMD Radeon RX 5700.
+\subsection{Validation des Performances}\label{subsec:performances}
+Les relevés de performances temporelles pour une grille de résolution standard ($1024 \times 1024$) sont synthétisés dans le Tableau \ref{tab:perf}.
 
 \begin{table}[htbp]
     \centering
     \resizebox{\columnwidth}{!}{%
         \begin{tabular}{lcccc}
             \toprule
-            \textbf{Étape de calcul} & \textbf{Mei (2007)} & \textbf{Jákó (2011)} & \textbf{Notre CPU}   & \textbf{Notre GPU} \\
+            \textbf{Étape de calcul} & \textbf{Mei (2007)} & \textbf{Jákó (2011)} & \textbf{CPU (C++)} & \textbf{GPU (Compute)} \\
             \midrule
-            Sim. Physique (Eau)      & 6.65 ms             & N/A                  & 898.244 ms           & 0.408 ms           \\
-            Érosion Thermique        & N/A                 & N/A                  & 821.458 ms           & 0.223 ms           \\
-            Rendu Visuel             & 10.31 ms            & N/A                  & 3.227 ms             & 0.407 ms           \\
+            Sim. Physique (Eau)      & 6,7 ms              & N/A                  & 898,2 ms           & 0,4 ms                 \\
+            Érosion Thermique        & N/A                 & N/A                  & 821,5 ms           & 0,2 ms                 \\
+            Rendu Visuel             & 10,3 ms             & N/A                  & 3,2 ms             & 0,4 ms                 \\
             \midrule
-            \textbf{Temps de Cycle}  & \textbf{16.95 ms}   & \textbf{15.47 ms}    & \textbf{1722.929 ms} & \textbf{1.037 ms}  \\
+            \textbf{Temps de Cycle}  & \textbf{17,0 ms}    & \textbf{15,5 ms}     & \textbf{1722,9 ms} & \textbf{1,0 ms}        \\
             \bottomrule
         \end{tabular}%
     }
-    \caption{Tableau comparatif des performances (Résolution : $1024 \times 1024$). Les données historiques \cite{MDH07, Jako11} servent de référentiels. Un cycle de 1.037\,ms correspond à une fréquence théorique de 964 images par seconde (FPS).}
+    \caption{Tableau comparatif des performances (Résolution : $1024 \times 1024$). L'implémentation GPU aboutit à un temps de cycle global de l'ordre de la milliseconde, permettant de dépasser le seuil critique des +960 images par seconde (FPS).}
     \label{tab:perf}
 \end{table}
 
-L'analyse de ces métriques illustre un saut technologique majeur. L'implémentation CPU est terrassée par la complexité algorithmique du voisinage de Moore (8 directions) et les calculs de collision 3D, aboutissant à un temps de cycle critique de 1,72\,seconde. Ce délai rend toute interaction impossible sur processeur (0,58 FPS).
+L'implémentation CPU aboutit à un temps de cycle insoutenable pour du temps réel (environ 0,58 image par seconde). Le basculement sur GPU via l'architecture Compute Shaders ramène la boucle complète à un cycle d'environ 1,0\,ms, validant un maintien constant à plus de \textbf{960 images par seconde (FPS)}.
+Toutefois, un test de charge sur une topologie extrême de $8192 \times 8192$ cellules (soit plus de 67 millions de mailles) a fait grimper le temps de cycle à 56,0\,ms (environ 17 FPS). Bien que la capacité de calcul arithmétique encaisse cette multiplication, cette chute met en exergue la saturation inévitable de la bande passante mémoire (\textit{Memory Bandwidth}).
 
-Le basculement sur GPU via Compute Shaders pulvérise ces limitations, ramenant la boucle complète à seulement 1,037\,ms. Le facteur d'accélération global entre notre implémentation CPU et GPU atteint ainsi le ratio colossal de \textbf{1661x}. L'optimisation est particulièrement visible sur l'érosion thermique : malgré la complexité du modèle de Jákó (calcul de flux directionnels et dureté locale), le GPU exécute cette tâche en 0,223\,ms soit une accélération de 3680x face au CPU). Ces résultats prouvent que l'architecture moderne permet d'exécuter des modèles physiques autrefois coûteux (\cite{MDH07, Jako11}) en une fraction de milliseconde.
+\subsection{Validation Morphologique}\label{subsec:morphologie}
+Le couplage des interactions hydrologiques et de l'érosion thermique permet de simuler l'évolution du fluide et du substrat rocheux. Sur le plan géométrique, cette approche résout les artefacts d'incision verticale (canyons abrupts) caractéristiques du modèle hydraulique isolé, en redistribuant la matière instable par gravité. La topologie résultante évolue vers des profils de vallées réalistes caractérisés par des cônes d'éboulis physiquement fondés. L'impact morphologique de cette architecture est synthétisé en Figure \ref{fig:showcase_resultats}. Les formations géologiques observées (réseaux hydrographiques, lignes de courant sous-marines et dépôts deltaïques) valident le comportement du modèle de simulation.
 
-\subsection{Interactivité et Découplage Temporel}
-Cette colossale réserve de puissance (framerate théorique frôlant les 960~FPS) nous a permis d'implémenter un découplage temporel profond entre le moteur physique et le moteur de rendu. L'utilisateur peut, via l'interface ImGui, ordonner l'exécution de multiples itérations physiques (\texttt{ITERATIONS\_PER\_FRAME}, paramétrable jusqu'à 10) pour chaque image affichée à l'écran.
+% --- DÉBUT DE LA COUPURE EN 1 COLONNE ---
+\begin{strip}
+    \centering
+    \captionsetup{type=figure} % Ligne magique indispensable pour utiliser subfigure dans un strip
 
-Afin de donner une échelle de grandeur à cette performance, nous avons introduit un facteur de conversion vers le temps géologique. En considérant qu'une seconde de temps physique simulé équivaut à 10\,000 ans d'érosion naturelle, notre simulateur permet de compresser les millénaires de manière fulgurante. Avec un pas de temps $\Delta t = 0,0015$, chaque itération fait avancer l'érosion de 15~ans. À son paramétrage maximal de 10~itérations par trame, l'application calcule 150~années géologiques par image. Ainsi, une seule seconde de simulation en temps réel, standardisée à 60~FPS, permet d'écouler \textbf{9\,000 années géologiques} (un chiffre qui s'envole à plus de 144\,000 années par seconde si le framerate est débridé).
+    % --- PREMIÈRE LIGNE ---
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/alpes_francaises.png}
+        \caption{Terrain de base (Alpes)}
+        \label{fig:grid_base}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/mouvement_eau.png}
+        \caption{Lignes de courant}
+        \label{fig:grid_courant}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/courant_berge.png}
+        \caption{Deltas et berges}
+        \label{fig:grid_delta}
+    \end{subfigure}
 
-Ce mécanisme permet d'observer en quelques minutes des processus qui nécessiteraient normalement des millions d'années, comme le creusement de canyons profonds ou l'aplanissement de massifs montagneux. L'interface offre de surcroît la possibilité d'altérer les constantes physiques ou de déplacer des sources de rivières à la volée, transformant le programme en un puissant laboratoire géomorphologique interactif où l'utilisateur navigue fluidement à travers les époques.
+    \vspace{0.5cm} % Espace vertical entre les deux lignes
 
-% -----------------------------------------------------------------------------------------------------------------------------------------
-% Discussion
-\section{Discussion et Analyse Critique}
-Si les métriques brutes valident l'efficacité computationnelle de notre architecture sur GPU, une analyse critique est indispensable pour évaluer la viabilité globale du modèle face aux standards académiques et industriels actuels.
+    % --- SECONDE LIGNE ---
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/details_realiste.png}
+        \caption{Détails d'érosion}
+        \label{fig:grid_details}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/vue_scientifique.png}
+        \caption{Vue non texturée (scientifique)}
+        \label{fig:grid_scien}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/alpes_francaises_fin.png}
+        \caption{Résultat après simulation}
+        \label{fig:grid_fin}
+    \end{subfigure}
 
-\subsection{Biais Matériel et Goulets d'Étranglement}
-Le ratio d'accélération de 1661x mesuré face à notre implémentation CPU est spectaculaire, mais il convient de l'analyser avec prudence. Les temps de cycle documentés par Mei et al. en 2007 (16,95\,ms) \cite{MDH07} et Jákó en 2011 (15,47\,ms) \cite{Jako11} ont été obtenus sur des architectures matérielles (GeForce 8800 GTX et Radeon HD4870) dont la puissance brute et la bande passante mémoire sont non comparables avec notre plateforme de test contemporaine (Radeon RX 5700).
+    \caption{Panorama des fonctionnalités et résultats morphologiques du simulateur. Ces captures illustrent les capacités de façonnage en temps réel, de la dynamique des fluides aux instabilités gravitaires, ainsi que les outils de contrôle offerts à l'utilisateur.}
+    \label{fig:showcase_resultats}
+\end{strip}
 
-Afin d'éprouver les limites de notre architecture et d'identifier le véritable goulet d'étranglement matériel, nous avons mené un test de charge (\textit{stress-test}) empirique sur une topologie massive de $8192 \times 8192$ cellules (soit plus de 67 millions de sommets gérés simultanément, représentant une multiplication par 64 de l'empreinte mémoire).
 
-Sur cette échelle s'apparentant à un environnement de monde ouvert (\textit{Open World}), le temps de cycle grimpe à 56,03\,ms (soit 17,4 FPS), réparti entre la physique hydrique (28,34\,ms), l'érosion thermique (15,96\,ms) et le rendu visuel (11,72\,ms). Bien que la performance de calcul pure encaisse cette multiplication par 64 de manière quasi-linéaire, la chute du framerate sous le seuil du temps réel interactif (60 FPS) met en exergue la saturation de la bande passante mémoire (\textit{Memory Bandwidth}). Sur de telles résolutions, les allers-retours constants entre la VRAM et les cœurs de calcul lors du \textit{ping-pong buffering} saturent le bus matériel. Cette limite physique démontre que pour un déploiement industriel à très grande échelle, il serait impératif d'abandonner l'évaluation globale de la grille au profit d'une architecture par tuiles dynamiques (\textit{Tile-based processing}) ou par niveaux de détails (\textit{Clipmaps}).
+\subsection{Analyse Critique et Positionnement Industriel}\label{subsec:critique}
+Pour évaluer la viabilité globale de ce modèle face aux standards actuels, il convient de le positionner vis-à-vis des solutions industrielles hors-ligne (\textit{offline}) telles que \textit{World Machine} \cite{WorldMachine} ou \textit{Gaea} \cite{Gaea}.
 
-\subsection{Validation Morphologique Qualitetive}
-Au-delà de la performance, le réalisme géologique était le second enjeu de ce projet. Le modèle original de Mei, s'il trace des réseaux fluviaux cohérents, a tendance à générer des "trous" (des canyons d'un pixel de large et infiniment profonds).
+Ces logiciels professionnels s'appuient majoritairement sur des descriptions \textbf{lagrangiennes} (systèmes de particules) exécutées de manière asynchrone. La méthode particulaire permet un tracé de micro-détails et de ravines beaucoup plus précis, et garantit une conservation stricte de la masse, évitant le biais de création ou perte de matière inhérent à notre approximation d'advection semi-lagrangienne rétrograde. Toutefois, ces outils imposent un flux de travail fragmenté : l'artiste modifie un paramètre et doit patienter plusieurs secondes ou minutes pour observer le résultat compilé.
 
-L'intégration du modèle de Jákó (érosion thermique sur voisinage de Moore et dureté spatiale) a permis d'atténuer ces artefacts. Visuellement, l'ajout des éboulements gravitationnels transforme ces aiguilles instables en vallées en "V" beaucoup plus naturelles, flanquées de cônes d'éboulis à leur base. Cependant, le paradigme Eulérien sur grille 2.5D limite l'expressivité de ces formations : l'impossibilité mathématique d'avoir deux valeurs $Y$ pour un même couple $(X,Z)$ interdit formellement la création de grottes ou de surplombs rocheux, limitant la génération à des paysages de type "vue aérienne".
+L'approche eulérienne temps réel développée dans ce travail propose un paradigme alternatif. Bien qu'elle sacrifie une fraction de la précision physique stricte lors du transport sédimentaire, elle offre une interactivité instantanée.
 
-\subsection{Positionnement face à l'Industrie (Outils Hors-Ligne)}
-Comment cette approche temps réel se positionne-t-elle face aux standards de l'industrie tels que \textit{World Machine} ou \textit{Gaea} ?
+\subsection{Limites Structurelles et Perspectives de Recherche}\label{subsec:limites}
+La formulation actuelle soulève plusieurs verrous techniques, ouvrant la voie à des perspectives de recherche distinctes :
+\begin{itemize}
+    \item \textbf{Contraintes topologiques du 2.5D :} L'impossibilité mathématique de stocker de multiples valeurs d'altitude $Y$ pour un même couple de coordonnées $(X,Z)$ interdit la création de grottes, de surplombs ou de corniches. Lever cette contrainte nécessiterait d'orienter le moteur vers des structures stratifiées volumétriques (\textit{Multi-Layered Heightmaps}) \cite{Nilles24}.
+    \item \textbf{Verrouillage de la topologie sur GPU (\textit{Vertex Displacement}) :} La déformation du maillage s'opérant exclusivement au stade de l'affichage matériel (Section \ref{subsec:pipeline_rendu}), la géométrie modifiée est inconnue du CPU. Cette architecture entrave l'optimisation des collisions physiques en jeu et nécessite une passe de rapatriement mémoire coûteuse (\textit{Readback}) pour exporter le modèle 3D généré vers des formats standards (OBJ/FBX).
+    \item \textbf{Optimisation de l'échelle par tuilage :} Pour pallier la saturation de la bande passante mémoire observée lors du stress-test sur grille $8192 \times 8192$, une évolution nécessaire consisterait à abandonner l'évaluation globale au profit d'une architecture de traitement par tuiles dynamiques ou par niveaux de détails (\textit{Clipmaps}).
+    \item \textbf{Perspective de comparaison architecturale pure :} Une évaluation méthodologique rigoureuse consisterait à réimplémenter l'architecture originelle de Mei (détournant les \textit{Fragment Shaders}) sur notre plateforme moderne (Ryzen 5 2600 / RX 5700). Cela permettrait d'isoler et de mesurer l'impact de performance exact du paradigme Compute Shader à puissance matérielle strictement constante.
+    \item \textbf{Couplage écosystémique :} Une ouverture prometteuse réside dans l'intégration d'un modèle végétal dynamique. L'humidité du sol influencerait la croissance d'une flore dont le réseau racinaire modifierait localement le coefficient de dureté $R(x,y)$, simulant la résistance mécanique d'un biome face à l'érosion.
+\end{itemize}
 
-Ces logiciels professionnels s'appuient majoritairement sur des modèles \textbf{Lagrangiens} (systèmes de particules) exécutés de manière asynchrone (\textit{offline}). La méthode particulaire permet un creusement de micro-détails beaucoup plus précis et garantit une conservation de la masse parfaite, évitant le problème de création de matière inhérent à notre advection semi-Lagrangienne.
+% ========================================================================================================================================
+% 8. Conclusion
+\section{Conclusion}\label{sec:conclusion}
 
-Toutefois, ces outils souffrent d'un flux de travail fragmenté : l'artiste modifie un paramètre et doit patienter plusieurs secondes ou minutes pour observer le résultat du calcul d'érosion. Notre approche propose un paradigme alternatif. Bien qu'elle sacrifie une fraction de la précision physique (notamment sur la conservation stricte des sédiments), elle offre une interactivité instantanée à 960 FPS. Ce type de moteur trouve donc sa pertinence non pas comme outil de rendu final de géométrie, mais comme \textbf{laboratoire de prototypage rapide} ou comme composante dynamique intégrée directement dans le moteur de jeu (\textit{runtime}), permettant à l'environnement d'évoluer en temps réel en réaction aux actions du joueur.
+L'objectif central de ce projet de recherche consistait à concevoir un solveur d'érosion procédurale, s'appuyant sur le modèle hydrodynamique historique de Mei et al. \cite{MDH07}, tout en comblant son manque de réalisme morphologique identifié par les recherches récentes \cite{SGG24}. Ce cahier des charges a été rempli.
 
-% -----------------------------------------------------------------------------------------------------------------------------------------
-% Conclusion
-\section{Conclusion et Perspectives}
-L'objectif central de ce projet TER consistait à concevoir un moteur d'érosion procédurale interactif, s'appuyant sur le modèle historique de Mei et al. \cite{MDH07}, tout en comblant son manque de réalisme topologique \cite{SGG24} via l'intégration des technologies graphiques contemporaines. Ce cahier des charges a été rempli avec succès.
+L'intégration des lois d'éboulement de Jákó et Szirmay-Kalos \cite{Jako11} s'est révélée déterminante pour garantir la stabilité géologique des reliefs. Sur le plan de l'ingénierie logicielle, la structuration stricte des données et la maîtrise des barrières de synchronisation mémoire au sein des Compute Shaders OpenGL ont abouti à des performances temps réel dépassant les 960 images par seconde.
 
-Sur le plan géométrique, l'intégration du modèle de Jákó et Szirmay-Kalos \cite{Jako11} s'est révélée déterminante. L'ajout du frein en eaux profondes, de l'érosion par collision 3D, et de l'érosion thermique gérée par tuyaux virtuels sur 8 directions a permis d'obtenir une topologie extrêmement organique, riche en deltas et en éboulis hétérogènes. Sur le plan de l'ingénierie logicielle, la structuration stricte des données en \textit{ping-pong buffering}, la conservation locale de la masse (incluant le couplage du volume Eau-Sédiment), et la maîtrise des barrières mémoire au sein des Compute Shaders ont abouti à des performances de premier ordre (1,037 ms par cycle pour plus d'un million de sommets). L'analyse croisée avec notre propre version CPU de référence a permis de quantifier scientifiquement l'apport matériel, validant une accélération matérielle excédant 1660x.
-
-Fort de cette architecture stable et massivement optimisée, les perspectives d'évolution sont particulièrement prometteuses. La contrainte inhérente aux \textit{heightmaps} 2.5D (l'impossibilité de modéliser des surplombs, grottes ou arches rocheuses) pourrait être levée en orientant le moteur vers des structures stratifiées volumétriques (\textit{Multi-Layered Heightmaps}) \cite{Nilles24}. À une échelle écosystémique, le couplage de cette érosion avec un modèle végétal dynamique où l'humidité favorise la croissance d'une flore dont le réseau racinaire renforce mécaniquement la résistance du sol à l'érosion hydrique  constituerait le défi ultime pour la génération procédurale de biomes planétaires complets.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/nepalUP.png}
+    \caption{Rendu final d'un massif montagneux érodé en temps réel par notre implémentation.}
+    \label{fig:resultat_conclusion}
+\end{figure}
 
 % --- BIBLIOGRAPHIE ---
 \begin{thebibliography}{9}
@@ -451,6 +540,88 @@ Fort de cette architecture stable et massivement optimisée, les perspectives d'
     \textit{3D Real-Time Hydraulic Erosion Simulation using Multi-Layered Heightmaps}.
     In Vision, Modeling, and Visualization (VMV), 2024.
 
+    \bibitem{WorldMachine}
+    World Machine Software.
+    \textit{World Machine v4 Procedural Terrain Generator}.
+    \url{https://www.world-machine.com/}, 2024.
+
+    \bibitem{Gaea}
+    QuadSpinner.
+    \textit{Gaea 2.0 Terrain Design Suite}.
+    \url{https://quadspinner.com/}, 2024.
+
 \end{thebibliography}
+
+% --- ANNEXES ---
+\newpage
+\appendix
+\section{Détails de l'Implémentation du Pipeline de Shaders}\label{annexe:shaders}
+
+Le pipeline d'érosion est segmenté en huit passes de Compute Shaders distinctes, formant une boucle itérative où chaque étape dépend des résultats physiques de la précédente. Pour pallier les limites du modèle historique \cite{MDH07}, chaque phase a été enrichie par l'intégration de modèles physiques récents \cite{Jako11}.
+
+\paragraph{1. Apport Hydrique : Pluie et Sources (\texttt{water\_increment.glsl}) :}
+Cette première étape initialise l'énergie (le volume d'eau) dans le système. La hauteur de la colonne d'eau $d$ de chaque cellule est mise à jour en intégrant l'apport hydrique sur le pas de temps $\Delta t$. Cet apport se décompose en deux mécanismes distincts :
+\begin{itemize}
+    \item \textbf{Précipitation globale :} Une pluie uniforme $r$ arrose l'intégralité de la topographie selon l'équation $d_{t+\Delta t} = d_t + (\Delta t \cdot r)$. Au-delà de l'aspect géologique, le maintien de cette nappe d'eau globale est une nécessité mathématique. En mécanique des fluides sur grille, une épaisseur d'eau nulle ($d = 0$) entraîne un risque de division par zéro lors du calcul ultérieur de la vitesse ($v = \text{débit} / d$). La pluie garantit ainsi une fine pellicule hydrique permanente, prévenant l'apparition de ces singularités numériques.
+    \item \textbf{Sources locales (Rivières) :} Afin d'offrir un contrôle interactif, le simulateur permet l'injection d'un débit d'eau massif à des coordonnées ciblées. Mathématiquement, cela se traduit par une addition scalaire contrainte dans un rayon défini, simulant la résurgence d'une source souterraine et permettant de diriger intentionnellement le creusement d'une vallée.
+\end{itemize}
+
+\paragraph{2. Calcul des Flux par Tuyaux Virtuels (\texttt{flux\_compute.glsl}) :}
+Cette passe constitue le moteur hydrodynamique du simulateur. Elle évalue la quantité d'eau qui doit transiter entre chaque cellule et son voisinage de von Neumann (les 4 directions cardinales). L'évaluation se déroule en trois étapes :
+\begin{itemize}
+    \item \textbf{Pression hydrostatique :} L'algorithme calcule d'abord la différence d'altitude absolue $\Delta h = (b_{local} + d_{local}) - (b_{voisin} + d_{voisin})$. Si $\Delta h > 0$, la gravité exerce une pression poussant le fluide vers la cellule voisine.
+    \item \textbf{Accélération inertielle :} L'écoulement n'étant pas instantané, l'eau possède une inertie. Le flux sortant $f$ est mis à jour en ajoutant la nouvelle accélération au flux de l'itération précédente :
+          $$f_{t+\Delta t} = \max \left( 0, f_t + \Delta t \cdot A \frac{g \cdot \Delta h}{l} \right)$$
+          L'utilisation de la fonction $\max(0, \dots)$ garantit un écoulement strictement unidirectionnel, empêchant mathématiquement l'eau de remonter un tuyau à contre-courant. $A$ représente la section transversale du flux, $g$ la constante gravitationnelle, et $l$ la distance inter-cellulaire.
+    \item \textbf{Conservation de la masse (Facteur $K$) :} Sur une grille discrète, une forte pente combinée à un pas de temps $\Delta t$ trop grand pourrait théoriquement forcer une cellule à expulser un volume d'eau supérieur à celui qu'elle contient réellement. Pour prévenir cette aberration physique, le système calcule un scalaire de sécurité $K$. Si la somme des flux sortants excède le volume disponible, $K$ pondère uniformément les quatre vecteurs de sortie vers le bas, garantissant une conservation de masse absolue.
+\end{itemize}
+
+\paragraph{3. Mise à jour du niveau d'eau (\texttt{water\_update.glsl}) :}
+Une fois les flux validés, cette passe synchronise l'état physique de la cellule selon trois axes :
+\begin{itemize}
+    \item \textbf{Mise à jour hydrique :} La nouvelle hauteur d'eau $d_{t+\Delta t}$ est déduite par une somme algébrique du volume préexistant, du volume entrant depuis le voisinage, et du volume sortant.
+    \item \textbf{Inférence du champ vectoriel :} La vitesse $\vec{v} = (u,v)$ n'est pas stockée comme une variable indépendante, elle est inférée. L'algorithme calcule le débit net traversant la cellule sur l'axe $X$ (moyenne des flux gauche/droite) et l'axe $Y$ (moyenne haut/bas). En divisant ce vecteur de débit par la hauteur d'eau moyenne locale, on obtient le vecteur vitesse tridimensionnel du fluide.
+    \item \textbf{Friction et Rugosité spatiale :} Un coefficient de friction est introduit dans le calcul de cette vitesse pour modéliser la dissipation d'énergie cinétique. Ce frein simule la rugosité du terrain, garantissant un temps de résidence suffisant du fluide sur les pentes abruptes pour respecter la condition CFL (détaillée en Section \ref{subsec:cfl}).
+\end{itemize}
+
+\paragraph{4. Érosion et Sédimentation Avancées (\texttt{erosion\_deposition.glsl}) :}
+Cette passe régit le transfert de masse entre la roche dure (le substrat $b$) et la terre en suspension (le sédiment $s$). Le transfert est dicté par la \textbf{capacité de transport} $C$, représentant la charge sédimentaire maximale que l'eau peut porter avant saturation.
+\begin{itemize}
+    \item \textbf{Évaluation de la Capacité :} Suivant les travaux de Jákó \cite{Jako11}, $C$ est pondéré par l'impact géométrique (produit scalaire) et freiné en eaux profondes ($l_{max}$) pour protéger les fonds marins :
+          $$C = K_c \cdot \max(0.15, -\vec{v}_{3D} \cdot \vec{n}) \cdot |\vec{v}| \cdot l_{max}$$
+    \item \textbf{Cinétique de Transfert :} L'altération n'est pas instantanée. Si l'eau est sous-saturée ($C > s$), elle arrache de la roche selon un taux de dissolution $K_s$ tel que $\Delta s = K_s \cdot (C - s)$. Si l'eau est sur-saturée ($C < s$), elle dépose le surplus selon un taux de sédimentation $K_d$ tel que $\Delta s = K_d \cdot (s - C)$. La topologie $b$ et la charge sédimentaire $s$ sont mises à jour par ces variations.
+\end{itemize}
+
+\paragraph{5. Transport Sédimentaire par Advection (\texttt{sediment\_transport.glsl}) :}
+Une fois arrachés au sol, les sédiments $s$ sont charriés par le courant via le phénomène d'\textbf{advection}. La difficulté sur une grille fixe Eulérienne est de déplacer cette matière continue d'une case à l'autre sans créer d'accumulations aberrantes.
+
+Pour y parvenir, la méthode d'advection \textbf{semi-Lagrangienne rétrograde} \cite{MDH07} est appliquée. Plutôt que de calculer la destination des sédiments, l'algorithme procède par \textit{backtracing} :
+\begin{itemize}
+    \item \textbf{Ciblage spatial :} Pour chaque cellule $(x,y)$, l'algorithme lit le vecteur vitesse actuel de l'eau $\vec{v}$.
+    \item \textbf{Remontée du temps :} Il remonte virtuellement le courant d'une durée $\Delta t$ pour trouver les coordonnées exactes d'où provient l'eau qui arrive actuellement dans la cellule.
+    \item \textbf{Échantillonnage :} Cette coordonnée d'origine tombant rarement au centre parfait d'une case de la grille, l'algorithme calcule la quantité de sédiments présente à cet endroit précis par \textbf{interpolation bilinéaire} des 4 cases les plus proches. La cellule $(x,y)$ s'approprie ensuite cette nouvelle valeur.
+\end{itemize}
+
+\paragraph{6. Évaporation et Conditions aux Limites (\texttt{evaporation.glsl}) :}
+Le cycle hydrologique s'achève par l'extraction de l'eau hors du système, indispensable pour garantir un équilibre volumétrique global.
+\begin{itemize}
+    \item \textbf{Évaporation différentielle :} La hauteur d'eau diminue proportionnellement à un taux $K_e$, selon l'équation $d_{t+\Delta t} = d_t \cdot (1 - K_e \cdot \Delta t)$. Une heuristique d'évaporation pondérée par la cinématique est implémentée : l'eau stagnante ($|\vec{v}| \approx 0$) s'évapore mathématiquement plus vite que l'eau en mouvement, favorisant l'assèchement naturel des flaques isolées tout en préservant le débit des rivières principales.
+    \item \textbf{Ouverture du domaine (Conditions de Dirichlet) :} Pour éviter que l'accumulation de fluides aux frontières de la grille ne génère des barrages artificiels irréalistes, des \textbf{conditions aux limites de Dirichlet} de valeur nulle sont imposées sur le périmètre de la carte. En forçant la hauteur d'eau $d$ et la charge sédimentaire $s$ à zéro sur les bords, la grille fermée est transformée en un système ouvert.
+\end{itemize}
+
+\paragraph{7. Évaluation de l'Instabilité Gravitationnelle (\texttt{thermal\_flux.glsl}) :}
+Indépendamment de l'action de l'eau, cette passe simule les éboulements terrestres (érosion thermique). L'algorithme transpose le concept de tuyaux virtuels à la roche, évalué sur un voisinage de Moore (8 directions) \cite{Jako11} pour éviter l'apparition d'artefacts pyramidaux.
+\begin{itemize}
+    \item \textbf{Dureté et Angle de Talus :} L'algorithme évalue l'excès de pente de chaque cellule par rapport à ses voisines. Le seuil de rupture est défini par un coefficient de dureté locale $R(x,y)$, généré dynamiquement par un bruit spatial, permettant de soutenir des falaises verticales ou de générer des éboulements selon la nature simulée de la roche.
+    \item \textbf{Distribution des Flux :} Si l'inclinaison dépasse l'angle de repos $R(x,y)$, le volume de terre instable est calculé puis réparti proportionnellement dans 8 flux directionnels virtuels.
+    \item \textbf{Inhibition Hydrique :} L'éboulement est mathématiquement inhibé vers les cellules abritant un flux d'eau, protégeant ainsi les berges et empêchant le comblement instantané des lits de rivières.
+\end{itemize}
+
+\paragraph{8. Synchronisation (\texttt{thermal\_apply.glsl}) :}
+La topologie globale est définitivement mise à jour lors de cette dernière itération. Le découpage de l'érosion thermique en deux étapes (Calcul puis Application) répond à une contrainte architecturale critique du GPU : la gestion de la concurrence mémoire.
+\begin{itemize}
+    \item \textbf{Résolution des Conditions de Course :} Dans un modèle massivement parallèle, si une cellule tentait de "pousser" directement de la terre vers ses voisins, de multiples processus pourraient écrire simultanément à la même adresse mémoire, corrompant la topologie (\textit{race condition}).
+    \item \textbf{Approche par Rassemblement :} Pour contourner ce souci sans recourir à des opérations atomiques coûteuses, cette passe opère en lecture locale exclusive. Chaque cellule lit en sécurité les flux thermiques que ses 8 voisins ont préparés pour elle, et calcule son propre bilan : $b_{t+1} = b_t - \sum \text{flux\_sortants} + \sum \text{flux\_entrants}$. Ce \textit{design pattern} garantit un déterminisme absolu et une conservation topologique stricte.
+\end{itemize}
 
 \end{document}
