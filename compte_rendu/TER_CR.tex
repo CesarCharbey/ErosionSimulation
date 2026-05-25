@@ -97,7 +97,7 @@ Dans l'industrie du divertissement numérique englobant le jeu vidéo, la réali
 Des applications industrielles telles que \textit{World Machine} \cite{WorldMachine} ou \textit{Gaea} \cite{Gaea} exploitent des algorithmes d'érosion pour transformer des bruits mathématiques abstraits en structures topographiques réalistes. Néanmoins, ces solutions reposent principalement sur des calculs hors-ligne (\textit{offline}). Cette déconnexion temporelle exclut tout ajustement dynamique immédiat des paramètres par l'utilisateur lors des phases de conception, figeant le processus itératif de création.
 
 \subsection{La Problématique de l'Érosion en Temps Réel}\label{subsec:problematique}
-L'aspect organique des massifs montagneux et des réseaux hydrographiques résulte d'interactions dynamiques continues entre les précipitations atmosphériques et le substrat terrestre. D'un point de vue macroscopique, ces processus associent la cinématique de l'écoulement fluide au transfert de masse sédimentaire. Le transport de la concentration de sédiments en suspension $s$ (exprimée en volume de matière par unité de surface) par un champ de vitesse hydrodynamique bidimensionnel $\vec{v} = (u, v)$ est régi par la loi de conservation de la masse, formalisée sous la forme d'une équation d'advection-diffusion :
+L'aspect organique des massifs montagneux et des réseaux hydrographiques résulte d'interactions dynamiques continues entre les précipitations atmosphériques et le substrat terrestre. D'un point de vue macroscopique, ces processus associent la cinématique de l'écoulement de fluide au transfert de masse sédimentaire. Le transport de la concentration de sédiments en suspension $s$ (exprimée en volume de matière par unité de surface) par un champ de vitesse hydrodynamique bidimensionnel $\vec{v} = (u, v)$ est régi par la loi de conservation de la masse, formalisée sous la forme d'une équation d'advection-diffusion :
 \begin{equation}
     \frac{\partial s}{\partial t} + \nabla \cdot (s \vec{v}) = \sigma
 \end{equation}
@@ -202,7 +202,7 @@ La seconde équation dérive de la deuxième loi de Newton appliquée à un mili
 
 Cette formulation couplée lie ainsi continuellement la hauteur de la lame d'eau à sa dynamique cinématique. Cette réduction dimensionnelle fait basculer le système d'une description volumique tridimensionnelle à un champ bidimensionnel en 2.5D, réduisant significativement la quantité d'informations à traiter par maille lors de la phase de discrétisation numérique \cite{MDH07}.
 \subsection{Formalisation de la Grille Discrète}\label{subsec:grille_discrete}
-Pour résoudre numériquement ce système d'équations sur GPU, l'espace bidimensionnel est discrétisé sous la forme d'une grille régulière de dimensions $N \times N$ mailles. D'un point de vue mathématique, la topographie et la couche hydrique sont modélisées par des fonctions discrètes associant à chaque coordonnée entière $(i, j) \in \llbracket 0, N-1 \rrbracket^2$ un ensemble de hauteurs réelles :
+Pour résoudre numériquement ce système d'équations sur GPU, l'espace bidimensionnel est discrétisé sous la forme d'une grille régulière de dimensions $N \times N$ mailles. Mathématiquement, la topographie et la couche hydrique sont modélisées par des fonctions discrètes associant à chaque coordonnée entière $(i, j) \in \llbracket 0, N-1 \rrbracket^2$ un ensemble de hauteurs réelles :
 \begin{equation}\label{eq:mapping_grille}
     (i, j) \mapsto \begin{pmatrix} b_{i,j} \\ d_{i,j} \end{pmatrix} \in \mathbb{R} \times \mathbb{R}^+
 \end{equation}
@@ -512,6 +512,7 @@ L'intégration des lois d'éboulement de Jákó et Szirmay-Kalos \cite{Jako11} s
     \label{fig:resultat_conclusion}
 \end{figure}
 
+\newpage
 % --- BIBLIOGRAPHIE ---
 \begin{thebibliography}{9}
 
